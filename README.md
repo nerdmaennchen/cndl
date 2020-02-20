@@ -49,3 +49,6 @@ int main()
     return 0;
 }
 ~~~
+
+A slightly more elaborate example can be found [here](https://github.com/nerdmaennchen/cndl/blob/demo/src/demo.cpp).
+The example also employs [qrqma](https://github.com/nerdmaennchen/qrqma) and [sargparse](https://github.com/gottliebtfreitag/sargparse).
