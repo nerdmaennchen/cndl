@@ -1,0 +1,25 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+</head>
+
+<body>
+    <h1>yeyyyy</h1>
+    <h2>url_args:</h2>
+    <ul>
+        {%- for k, v in url_args -%}
+        <li>
+            <pre>{{k}}: {{v}}</pre>
+        </li>
+        {%- endfor -%}
+    </ul>
+</body>
+<script>
+    let ws = new WebSocket("ws://localhost:8080/test/123/");
+    ws.onmessage = (msg) => {
+        console.log(msg.data);
+    };
+</script>
+
+</html>
