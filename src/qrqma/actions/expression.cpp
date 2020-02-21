@@ -351,14 +351,39 @@ void action<grammar::ops::op_and>::apply(ContextP &context) {
 }
 
 void action<grammar::ops::op_or>::apply(ContextP &context) {
-    using Helper = InfixHelper<types::Integer, types::Float, types::Bool, types::String>;
-    auto name = "operator cmp_and"sv;
-    detail::buildInfixOp<Helper>(context, name, detail::overloaded{
-        [](auto const& l, auto const& r) { return static_cast<bool>(l) || static_cast<bool>(r); },
-        [](std::string const& l, std::string const& r) { return not l.empty() || r.empty(); },
-        [](auto const& l, std::string const& r) { return static_cast<bool>(l) || r.empty(); },
-        [](std::string const& l, auto const& r) { return not l.empty() || static_cast<bool>(r); },
-    });
+    auto rhs = context->popExpression();
+    auto lhs = context->popExpression();
+    context->pushExpression(std::visit(detail::overloaded {
+        [&](types::ConstantExpression& l) -> types::Expression {
+            auto val_l = l.eval();
+            if (val_l.has_value() and convert<types::Bool>(val_l)) {
+                return std::move(l);
+            }
+            return std::visit(detail::overloaded {
+                [&](types::ConstantExpression& r) -> types::Expression {
+                    return std::move(r);
+                },
+                [&](types::NonconstantExpression& r) -> types::Expression {
+                    return types::NonconstantExpression{[r=std::move(r)] {
+                        return r.eval();
+                    }};
+                }
+            }, rhs);
+        },
+        [&](types::NonconstantExpression& l) -> types::Expression {
+            return types::NonconstantExpression{[l=std::move(l), rhs=std::move(rhs)]{
+                auto val_l = l.eval();
+                if (val_l.has_value() and convert<types::Bool>(val_l)) {
+                    return val_l;
+                }
+                return std::visit(detail::overloaded {
+                    [&](auto& r) {
+                        return r.eval();
+                    }
+                }, rhs);
+            }};
+        }
+    }, lhs));
 }
 
 } // namespace actions
