@@ -5,6 +5,7 @@
 #include "connection_handler.h"
 
 #include <atomic>
+#include <list>
 
 namespace cndl
 {
@@ -12,7 +13,7 @@ namespace cndl
 struct Server::Pimpl {
     Dispatcher dispatcher;
 
-    std::vector<simplyfile::ServerSocket> server_sockets;
+    std::list<simplyfile::ServerSocket> server_sockets;
 
     simplyfile::Event stopFD;
     std::atomic_bool running{false};
