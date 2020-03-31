@@ -12,7 +12,7 @@ namespace {
 bool flush_response(ConnectionHandler::TransmitJob &job, ConnectionHandler::ClientSocket const& con) {
     auto& [out_buf, bytes_sent, cb] = job;
     while (bytes_sent < out_buf.size()) {
-        int w = ::write(con, out_buf.data()+bytes_sent, out_buf.size()-bytes_sent);
+        int w = ::send(con, out_buf.data()+bytes_sent, out_buf.size()-bytes_sent, MSG_NOSIGNAL);
         if (w <= 0 and (errno == EWOULDBLOCK || errno == EAGAIN)) {
             return false;
         }
@@ -65,7 +65,7 @@ struct ConnectionHandler::Pimpl {
                 constexpr int read_size = 4096;
                 auto head = in_buf.size();
                 in_buf.resize(head+read_size);
-                int r = ::read(con, in_buf.data()+head, read_size);
+                int r = ::recv(con, in_buf.data()+head, read_size, 0);
                 if (r < 0 && (errno == EWOULDBLOCK || errno == EAGAIN)) {
                     in_buf.resize(head);
                     break;
