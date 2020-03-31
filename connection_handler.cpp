@@ -1,11 +1,11 @@
 #include "connection_handler.h"
 
-#include "protocol_handler.h"
 #include "http_protocol.h"
+#include "protocol_handler.h"
 
-#include <sys/epoll.h>
-
+#include <atomic>
 #include <mutex>
+#include <sys/epoll.h>
 
 namespace cndl {
 namespace {
@@ -36,6 +36,7 @@ struct ConnectionHandler::Pimpl {
 
     std::unique_ptr<ProtocolHandler> protocol{};
 
+    std::atomic<size_t> outBufferSize{0};
 
     Pimpl(ClientSocket i_con, Epoll& i_epoll, Dispatcher& i_dispatcher, ConnectionHandler* i_handler)
       : con{std::move(i_con)}
@@ -48,6 +49,11 @@ struct ConnectionHandler::Pimpl {
         std::lock_guard lock{transmit_job_mutex};
         auto job = TransmitJob(std::move(out_buf), 0U, std::move(on_after_sent));
         if (not transmit_jobs.empty() || not flush_response(job, con)) {
+            // update buffer size
+            auto const& [out_buf, bytes_sent, cb] = job;
+            outBufferSize += out_buf.size() - bytes_sent;
+
+            // queue job
             transmit_jobs.emplace_back(std::move(job));
         }
     }
@@ -86,8 +92,14 @@ struct ConnectionHandler::Pimpl {
         if (flags & EPOLLOUT) {
             std::lock_guard lock{transmit_job_mutex};
             if (not transmit_jobs.empty()) {
-                if (flush_response(transmit_jobs.front(), con)) {
-                    transmit_jobs.erase(transmit_jobs.begin());
+                auto job = transmit_jobs.begin();
+                // update buffer size
+                outBufferSize += std::get<1>(*job);
+                bool sendAll = flush_response(*job, con);
+                outBufferSize -= std::get<1>(*job);
+
+                if (sendAll) {
+                    transmit_jobs.erase(job);
                 }
             } else if (not protocol) { // if there is nothing to send and no protocol to listen (i.e., when we have flushed all data) bail out
                 close(false);
@@ -106,6 +118,10 @@ struct ConnectionHandler::Pimpl {
         con.close();
     }
 
+    size_t getOutBufferSize() const {
+        return outBufferSize;
+    }
+
     Dispatcher& getDispatcher() {
         return dispatcher;
     }
@@ -122,6 +138,10 @@ void ConnectionHandler::write(ByteBuf out_buf, AfterSentCB on_after_sent) {
 void ConnectionHandler::close(bool blocking) {
     pimpl->close(blocking);
 }
+size_t ConnectionHandler::getOutBufferSize() const {
+    return pimpl->getOutBufferSize();
+}
+
 
 Dispatcher& ConnectionHandler::getDispatcher() {
     return pimpl->getDispatcher();

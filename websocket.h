@@ -46,14 +46,14 @@ struct Websocket : ProtocolHandler {
 
 
     using ProtocolHandler::ProtocolHandler;
-    
+
     virtual ~Websocket() = default;
-    
+
     // called from the IO loop
     ConsumeResult onDataReceived(ByteView received) override;
     void onPeerClose() override;
-    
-    // called from the application 
+
+    // called from the application
     void send(AnyMessage message);
     void ping(AnyMessage message, AfterSentCB on_after_sent={}); // max payload length is 125
 
