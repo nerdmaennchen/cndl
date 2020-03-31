@@ -123,9 +123,11 @@ void Websocket::send(BinMessage message, OpCode opcode, bool fin, AfterSentCB on
         serialized.emplace_back(std::byte(pl));
     } else {
         if (message.size() <= 0xffff) {
+            serialized.emplace_back(std::byte(126));
             serialized.emplace_back(std::byte(pl >> 8));
             serialized.emplace_back(std::byte(pl >> 0));
         } else {
+            serialized.emplace_back(std::byte(127));
             for (auto i{7}; i >= 0; --i) {
                 serialized.emplace_back(std::byte(pl >> (i*8)));
             }

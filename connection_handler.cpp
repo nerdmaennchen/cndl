@@ -12,7 +12,7 @@ namespace {
 bool flush_response(ConnectionHandler::TransmitJob &job, ConnectionHandler::ClientSocket const& con) {
     auto& [out_buf, bytes_sent, cb] = job;
     while (bytes_sent < out_buf.size()) {
-        int w = ::write(con, out_buf.data()+bytes_sent, out_buf.size()-bytes_sent);
+        int w = ::send(con, out_buf.data()+bytes_sent, out_buf.size()-bytes_sent, MSG_NOSIGNAL);
         if (w <= 0 and (errno == EWOULDBLOCK || errno == EAGAIN)) {
             return false;
         }
@@ -37,7 +37,7 @@ struct ConnectionHandler::Pimpl {
     std::unique_ptr<ProtocolHandler> protocol{};
 
 
-    Pimpl(ClientSocket i_con, Epoll& i_epoll, Dispatcher& i_dispatcher, ConnectionHandler* i_handler) 
+    Pimpl(ClientSocket i_con, Epoll& i_epoll, Dispatcher& i_dispatcher, ConnectionHandler* i_handler)
       : con{std::move(i_con)}
       , epoll{i_epoll}
       , dispatcher{i_dispatcher}
@@ -65,7 +65,7 @@ struct ConnectionHandler::Pimpl {
                 constexpr int read_size = 4096;
                 auto head = in_buf.size();
                 in_buf.resize(head+read_size);
-                int r = ::read(con, in_buf.data()+head, read_size);
+                int r = ::recv(con, in_buf.data()+head, read_size, 0);
                 if (r < 0 && (errno == EWOULDBLOCK || errno == EAGAIN)) {
                     in_buf.resize(head);
                     break;
@@ -94,7 +94,7 @@ struct ConnectionHandler::Pimpl {
                 return;
             }
         }
-        if (con.valid()) { 
+        if (con.valid()) {
             // up to here con might have been closed (and thus deregistered from epoll)
             // we only need to rearm the epoll handle if the connection is still open
             epoll.modFD(con,EPOLLIN|EPOLLOUT|EPOLLHUP|EPOLLRDHUP|EPOLLONESHOT);
@@ -135,12 +135,12 @@ void ConnectionHandler::operator()(int flags) {
     (*pimpl)(flags);
 }
 
-ConnectionHandler::ConnectionHandler(ClientSocket cs, Epoll& load_balancer, Dispatcher& dispatcher) 
+ConnectionHandler::ConnectionHandler(ClientSocket cs, Epoll& load_balancer, Dispatcher& dispatcher)
   : pimpl{std::make_unique<Pimpl>(std::move(cs), load_balancer, dispatcher, this)}
 {}
 
 ConnectionHandler::ConnectionHandler(ConnectionHandler&& rhs) noexcept
-  : pimpl{std::move(rhs.pimpl)} 
+  : pimpl{std::move(rhs.pimpl)}
 {
     if (pimpl->protocol) {
         pimpl->protocol->setConnectionHandler(this);
@@ -154,7 +154,7 @@ ConnectionHandler& ConnectionHandler::operator=(ConnectionHandler&& rhs) noexcep
     }
     return *this;
 }
-ConnectionHandler::~ConnectionHandler() 
+ConnectionHandler::~ConnectionHandler()
 {}
 
 }

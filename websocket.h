@@ -108,7 +108,8 @@ struct WebsocketHandler {
 
     // you have to implement an onOpen method that accepts the parameters passed from the URL:
     // bool onOpen(Request const&, Websocket&, urlargs...)
-    // onOpen returns true if the incoming socket shall be accepted 
+    // onOpen returns true if the incoming socket shall be accepted
+
     virtual void onPing(Websocket& ws, BinMessage message);
     virtual void onPong(Websocket& ws, BinMessage message);
 };
