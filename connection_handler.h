@@ -39,6 +39,8 @@ struct ConnectionHandler {
 
     void close(bool blocking); // closes the underlying socket and removes it from the IO loop
 
+    size_t getOutBufferSize() const;
+
     Dispatcher& getDispatcher();
 
     Epoll& getIOLoop();

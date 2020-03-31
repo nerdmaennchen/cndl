@@ -19,7 +19,7 @@ struct ProtocolHandler {
 
     ProtocolHandler(ConnectionHandler* handler) : connection_handler{handler} {}
     virtual ~ProtocolHandler() = default;
-    
+
     // called when data was received
     // return the amount of bytes consumed
     virtual ConsumeResult onDataReceived(ByteView received) = 0;
@@ -29,6 +29,7 @@ struct ProtocolHandler {
     void setConnectionHandler(ConnectionHandler* new_handler) {
         connection_handler = new_handler;
     }
+    size_t getOutBufferSize() const;
 protected:
     ConnectionHandler* connection_handler;
 };
