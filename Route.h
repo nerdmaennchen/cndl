@@ -23,8 +23,11 @@ struct RouteBase {
     struct Options {
         std::vector<std::string> methods{"GET"};
     };
-    RouteBase(Options options) : m_options{std::move(options)}
+    RouteBase(Options options) noexcept : m_options{std::move(options)}
     {}
+
+    RouteBase(RouteBase&&) noexcept = default;
+    RouteBase& operator=(RouteBase&&) noexcept = default;
 
     virtual ~RouteBase() = default;
     virtual OptResponse operator()(Request const& request) = 0;
@@ -79,6 +82,8 @@ public:
                  " markers but got " + std::to_string(m_pattern.mark_count()));
         }
     }
+    Route(Route&& route) noexcept = default;
+    Route& operator=(Route&&) noexcept = default;
 
     Route(std::string pattern, FuncT ftor, Options options={})
       : Route(std::regex{pattern}, std::move(ftor), std::move(options))
