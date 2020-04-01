@@ -1,10 +1,9 @@
-#include "dispatcher.h"
+#include "Dispatcher.h"
 
-#include <vector>
 #include <mutex>
+#include <vector>
 
-namespace cndl
-{
+namespace cndl {
 
 struct Dispatcher::Pimpl {
     ErrorBodyGenerator error_body_generator;

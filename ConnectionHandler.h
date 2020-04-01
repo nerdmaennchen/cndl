@@ -2,16 +2,15 @@
 
 #include "unique_function.h"
 
-#include "simplyfile/socket/Socket.h"
-#include "simplyfile/Epoll.h"
+#include <simplyfile/Epoll.h>
+#include <simplyfile/socket/Socket.h>
 
 #include <cstddef>
+#include <memory>
 #include <string_view>
 #include <vector>
-#include <memory>
 
-namespace cndl
-{
+namespace cndl {
 
 struct ProtocolHandler;
 struct Dispatcher;

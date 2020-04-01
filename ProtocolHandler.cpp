@@ -1,9 +1,9 @@
-#include "protocol_handler.h"
+#include "ProtocolHandler.h"
 
-#include "connection_handler.h"
+#include "ConnectionHandler.h"
 
-namespace cndl
-{
+namespace cndl {
+
 size_t ProtocolHandler::getOutBufferSize() const {
     return connection_handler->getOutBufferSize();
 }

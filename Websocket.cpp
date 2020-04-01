@@ -1,11 +1,11 @@
-#include "websocket.h"
-#include "connection_handler.h"
+#include "Websocket.h"
+
+#include "ConnectionHandler.h"
 #include "overloaded.h"
 
 #include <cstdint>
 
-namespace cndl
-{
+namespace cndl {
 
 constexpr std::byte operator"" _b(unsigned long long v){
     return std::byte(v);
@@ -18,11 +18,11 @@ Websocket::ConsumeResult Websocket::onDataReceived(ByteView bv) {
         if (bv.size() < 6) { // min length of a message
             break;
         }
-        
-        // read the header 
+
+        // read the header
         bool mask = 0_b != (bv[1] & 0x80_b);
         if (not mask) {
-            close(CloseCode::protocol_error, "recieved unmasked message");
+            close(CloseCode::protocol_error, "received unmasked message");
             return Websocket::ConsumeResult{consumed, ProtocolChange{nullptr}};
         }
 
@@ -114,7 +114,7 @@ void Websocket::onPeerClose() {
 
 void Websocket::send(BinMessage message, OpCode opcode, bool fin, AfterSentCB on_after_sent) {
     ByteBuf serialized{};
-    serialized.reserve(message.size() + 2 + 8); // reserver enough space for the header and the optional extra payload_len fields
+    serialized.reserve(message.size() + 2 + 8); // reserve enough space for the header and the optional extra payload_len fields
 
     serialized.emplace_back(std::byte(static_cast<unsigned char>(opcode) | (fin?0x80:0x00)));
 
@@ -165,7 +165,7 @@ void Websocket::close(CloseCode code,AnyMessage reason) {
                 throw std::invalid_argument("close payload too long");
             }
             return msg;
-        }, 
+        },
         [](TextMessage msg) {
             if (msg.size() > 125) {
                 throw std::invalid_argument("close payload too long");
