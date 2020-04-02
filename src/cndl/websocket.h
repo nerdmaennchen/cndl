@@ -46,14 +46,14 @@ struct Websocket : ProtocolHandler {
 
 
     using ProtocolHandler::ProtocolHandler;
-    
+
     virtual ~Websocket() = default;
-    
+
     // called from the IO loop
     ConsumeResult onDataReceived(ByteView received) override;
     void onPeerClose() override;
-    
-    // called from the application 
+
+    // called from the application
     void send(AnyMessage message);
     void ping(AnyMessage message, AfterSentCB on_after_sent={}); // max payload length is 125
 
@@ -108,7 +108,8 @@ struct WebsocketHandler {
 
     // you have to implement an onOpen method that accepts the parameters passed from the URL:
     // bool onOpen(Request const&, Websocket&, urlargs...)
-    // onOpen returns true if the incoming socket shall be accepted 
+    // onOpen returns true if the incoming socket shall be accepted
+
     virtual void onPing(Websocket& ws, BinMessage message);
     virtual void onPong(Websocket& ws, BinMessage message);
 };
