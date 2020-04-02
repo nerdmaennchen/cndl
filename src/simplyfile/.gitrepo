@@ -7,5 +7,5 @@
 	remote = git@github.com:gottliebtfreitag/simplyfile
 	branch = master
 	commit = f609fd47bbf9f078d97c06cd262b0d55bbeaed3d
-	parent = 7478f9053c9e4549a1cb692b08c7a50d29652468
+	parent = 222a1b3ddd547ae8376a8a9e02655236afefce71
 	cmdver = 0.3.1
