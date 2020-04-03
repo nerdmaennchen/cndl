@@ -115,6 +115,4 @@ struct WebsocketHandler {
     virtual void onPong(Websocket& ws, BinMessage message);
 };
 
-
-
 }

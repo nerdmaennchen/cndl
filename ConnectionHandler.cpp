@@ -1,7 +1,7 @@
 #include "ConnectionHandler.h"
 
-#include "http_protocol.h"
-#include "protocol_handler.h"
+#include "HttpProtocol.h"
+#include "ProtocolHandler.h"
 
 #include <atomic>
 #include <mutex>
