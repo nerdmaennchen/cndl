@@ -1,25 +1,24 @@
-#include "http_protocol.h"
-#include "connection_handler.h"
-#include "dispatcher.h"
+#include "HttpProtocol.h"
+#include "ConnectionHandler.h"
+#include "Dispatcher.h"
 #include "overloaded.h"
 #include "base64.h"
 
-#include "simplyfile/socket/Socket.h"
-#include "simplyfile/Epoll.h"
+#include <simplyfile/socket/Socket.h>
+#include <simplyfile/Epoll.h>
 
 #include <algorithm>
 #include <iostream>
 
 #include <openssl/sha.h>
 
-namespace cndl
-{
+namespace cndl {
 
 using namespace std::string_view_literals;
 
 namespace {
 
-constexpr auto magic_ws_guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"sv; 
+constexpr auto magic_ws_guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"sv;
 
 bool starts_with(std::string_view l, std::string_view prefix) {
     return l.size() >= prefix.size() and l.substr(0, prefix.size()) == prefix;
@@ -66,7 +65,7 @@ std::pair<Response, ProtocolHandler::ProtocolChange> connection_upgrade(Request 
     std::array<std::byte, 20> hash;
     std::string combined = websocket_key->second + std::string{magic_ws_guid};
     SHA1(reinterpret_cast<std::uint8_t const*>(combined.data()), combined.size(), reinterpret_cast<std::uint8_t*>(hash.data()));
-    
+
     Response response;
     response.status_code = 101;
     response.fields["Upgrade"] = "websocket";
@@ -109,7 +108,7 @@ HttpProtocol::ConsumeResult HttpProtocol::onDataReceived(ByteView received) {
                 received = received.substr(header->content_length);
                 consumed += header->content_length;
 
-                Request_Header processed_header{std::move(*header)};
+                Request::Header processed_header{std::move(*header)};
                 header.reset();
 
                 auto enctype = processed_header.fields.find("content-type");
@@ -133,10 +132,10 @@ HttpProtocol::ConsumeResult HttpProtocol::onDataReceived(ByteView received) {
                         if (bd_it == std::end(split)) {
                             throw Error(400, "content-type: multipart requires a boundary");
                         }
-                        
+
                         auto boundary = std::get<KV_Pair>(*bd_it).second;
                         processed_header.body_args = readMultipartBody(
-                            std::string_view{reinterpret_cast<char*>(message.data()), 
+                            std::string_view{reinterpret_cast<char*>(message.data()),
                             message.size()}, boundary
                         );
                     }

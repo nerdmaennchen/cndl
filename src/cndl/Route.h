@@ -1,18 +1,19 @@
 #pragma once
 
-#include <regex>
-#include <string_view>
-#include <string>
-#include <utility>
-#include <charconv>
-#include <type_traits>
-#include <optional>
-
 #include "unique_function.h"
 
-#include "arg_extractors.h"
-#include "request.h"
-#include "response.h"
+#include "Extractor.h"
+#include "Request.h"
+#include "Response.h"
+
+#include <charconv>
+#include <optional>
+#include <regex>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <utility>
+
 
 namespace cndl {
 
@@ -22,8 +23,11 @@ struct RouteBase {
     struct Options {
         std::vector<std::string> methods{"GET"};
     };
-    RouteBase(Options options) : m_options{std::move(options)}
+    RouteBase(Options options) noexcept : m_options{std::move(options)}
     {}
+
+    RouteBase(RouteBase&&) noexcept = default;
+    RouteBase& operator=(RouteBase&&) noexcept = default;
 
     virtual ~RouteBase() = default;
     virtual OptResponse operator()(Request const& request) = 0;
@@ -36,17 +40,17 @@ protected:
     Options m_options;
 };
 
-template <typename T> 
+template <typename T>
 struct Route;
 
-template <typename... Args> 
+template <typename... Args>
 struct Route<OptResponse(Request const&, Args...)> : RouteBase {
 protected:
     using ParameterTuple = std::tuple<std::remove_cv_t<std::remove_reference_t<Args>>...>;
     using FuncT = unique_func<OptResponse(Request const&, Args...)>;
     std::regex m_pattern;
     FuncT m_ftor;
-    
+
     template<std::size_t... indexes>
     OptResponse invoke(Request const& request, ParameterTuple const& params, std::index_sequence<indexes...>) {
         return m_ftor(request, std::get<indexes>(params)...);
@@ -66,7 +70,7 @@ protected:
 
 public:
     using Options = typename RouteBase::Options;
-    
+
     Route(std::regex pattern, FuncT ftor, Options options={})
       : RouteBase{std::move(options)}
       , m_pattern{std::move(pattern)}
@@ -78,17 +82,19 @@ public:
                  " markers but got " + std::to_string(m_pattern.mark_count()));
         }
     }
+    Route(Route&& route) noexcept = default;
+    Route& operator=(Route&&) noexcept = default;
 
     Route(std::string pattern, FuncT ftor, Options options={})
-      : Route(std::regex{pattern}, std::move(ftor), std::move(options)) 
+      : Route(std::regex{pattern}, std::move(ftor), std::move(options))
     {}
 
     virtual ~Route() = default;
 
     OptResponse operator()(Request const& request) override {
-        auto ressource = std::string_view{request.header.ressource};
-        std::match_results<decltype(std::begin(ressource))> res;
-        bool success = std::regex_match(begin(ressource), end(ressource), res, m_pattern);
+        auto resource = std::string_view{request.header.resource};
+        std::match_results<decltype(std::begin(resource))> res;
+        bool success = std::regex_match(begin(resource), end(resource), res, m_pattern);
         if (success) {
             if (std::find(begin(m_options.methods), end(m_options.methods), request.header.method) == std::end(m_options.methods)) {
                 throw Error(405);
@@ -107,23 +113,23 @@ template <typename _Functor,
               decltype(&_Functor::operator())>::type>
 Route(std::regex, _Functor, RouteBase::Options={})->Route<_Signature>;
 
-template <typename T> 
+template <typename T>
 struct GlobalRoute;
 
-template <typename... Args> 
+template <typename... Args>
 struct GlobalRoute<OptResponse(Request const&, Args...)> : Route<OptResponse(Request const&, Args...)> {
     using SuperClass = Route<OptResponse(Request const&, Args...)>;
     using FuncT = typename SuperClass::FuncT;
     using Options = typename SuperClass::Options;
 
-    GlobalRoute(std::regex pattern, FuncT ftor, Options options={}) 
+    GlobalRoute(std::regex pattern, FuncT ftor, Options options={})
       : SuperClass(std::move(pattern), std::move(ftor), std::move(options))
     {
         registerRouteGlobally(this);
     }
 
     GlobalRoute(std::string pattern, FuncT ftor, Options options={})
-      : GlobalRoute(std::regex{pattern}, std::move(ftor), std::move(options)) 
+      : GlobalRoute(std::regex{pattern}, std::move(ftor), std::move(options))
     {}
 
     virtual ~GlobalRoute() = default;

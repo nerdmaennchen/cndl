@@ -1,4 +1,5 @@
 #include "base64.h"
+
 #include <array>
 
 using namespace std::string_view_literals;
@@ -17,8 +18,7 @@ constexpr std::byte operator"" _b(unsigned long long v){
 }
 
 
-namespace cndl
-{
+namespace cndl {
 
 std::string base64_encode(std::basic_string_view<std::byte> s) {
     std::string out;

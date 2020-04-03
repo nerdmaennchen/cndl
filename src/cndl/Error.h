@@ -5,8 +5,8 @@
 namespace cndl {
 
 struct Error : std::runtime_error {
-    Error(int code, char const* message) 
-    : std::runtime_error(message) 
+    Error(int code, char const* message)
+    : std::runtime_error(message)
     , m_code{code}
     {}
 
@@ -14,7 +14,7 @@ struct Error : std::runtime_error {
 
     int code() const {
         return m_code;
-    }    
+    }
 private:
     int m_code;
 };

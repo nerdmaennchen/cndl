@@ -7,9 +7,9 @@ Other aspects (like the handling of websockets) is roughly based on tornado's.
 This is how the use of cndl looks:
 ~~~C++
 #include <iostream>
-#include "cndl/route.h"
-#include "cndl/server.h"
-#include "simplyfile/socket/Host.h"
+#include <cndl/Route.h>
+#include <cndl/Server.h>
+#include <simplyfile/socket/Host.h>
 
 using namespace std::literals::string_view_literals;
 
@@ -42,7 +42,7 @@ int main()
 {
     cndl::Server& server = cndl::Server::getGlobalServer();
     server.listen(simplyfile::getHosts("localhost", "8080")); // listen on localhost (ipv4 and ipv6 if available)
-    
+
     cndl::WSRoute wsroute{std::regex{R"(/(\d+)/)"}, echo_handler}; // route requests to /[number]/ to the echo_handler (onConnect will be called with the value of [number])
     server.getDispatcher().addRoute(&wsroute); // hook the route to the server (you can have multiple routes fro a single endpoint) 
     server.loop_forever(); // run the server's ioloop (epoll). call this from as many threads as you like

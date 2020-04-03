@@ -1,13 +1,12 @@
 #pragma once
 
-#include <vector>
 #include <cstddef>
-#include <string_view>
-#include <optional>
 #include <memory>
+#include <optional>
+#include <string_view>
+#include <vector>
 
-namespace cndl
-{
+namespace cndl {
 
 struct ConnectionHandler;
 

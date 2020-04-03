@@ -1,10 +1,9 @@
-#include "route.h"
+#include "Route.h"
 
-#include "server.h"
-#include "dispatcher.h"
+#include "Server.h"
+#include "Dispatcher.h"
 
-namespace cndl
-{
+namespace cndl {
 
 void registerRouteGlobally(RouteBase* route) {
     Server::getGlobalServer().getDispatcher().addRoute(route);

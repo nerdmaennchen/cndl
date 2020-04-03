@@ -1,17 +1,18 @@
 #pragma once
 
-#include "protocol_handler.h"
-#include "connection_handler.h"
-#include "simplyfile/Timer.h"
+#include "ProtocolHandler.h"
+#include "ConnectionHandler.h"
 
+#include <simplyfile/Timer.h>
+
+#include <chrono>
 #include <cstddef>
+#include <mutex>
 #include <string_view>
 #include <variant>
-#include <chrono>
-#include <mutex>
 
-namespace cndl
-{
+namespace cndl {
+
 struct WebsocketHandler;
 
 struct Websocket : ProtocolHandler {
@@ -113,7 +114,5 @@ struct WebsocketHandler {
     virtual void onPing(Websocket& ws, BinMessage message);
     virtual void onPong(Websocket& ws, BinMessage message);
 };
-
-
 
 }

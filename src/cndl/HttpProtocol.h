@@ -1,12 +1,11 @@
 #pragma once
 
-#include "protocol_handler.h"
-#include "request.h"
+#include "ProtocolHandler.h"
+#include "Request.h"
 
 #include <optional>
 
-namespace cndl
-{
+namespace cndl {
 
 struct HttpProtocol : ProtocolHandler {
     using ByteView = ProtocolHandler::ByteView;
@@ -15,11 +14,11 @@ struct HttpProtocol : ProtocolHandler {
 
     using ProtocolHandler::ProtocolHandler;
     virtual ~HttpProtocol() = default;
-    
+
     ConsumeResult onDataReceived(ByteView received);
 
 private:
-    std::optional<Request_Header> header;
+    std::optional<Request::Header> header;
 };
 
 

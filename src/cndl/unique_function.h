@@ -27,17 +27,17 @@ public:
     unique_func(Functor functor)
         : pimpl{std::make_unique<TypedPimpl<Functor>>(std::move(functor))} {}
 
-    unique_func() = default;
-    unique_func(unique_func &&) = default;
-    unique_func &operator=(unique_func &&) = default;
+    unique_func() noexcept = default;
+    unique_func(unique_func &&) noexcept = default;
+    unique_func &operator=(unique_func &&) noexcept = default;
     unique_func(unique_func const &) = delete;
     unique_func &operator=(unique_func const&) = delete;
 
-    operator bool() const {
+    operator bool() const noexcept {
         return static_cast<bool>(pimpl);
     }
 
-    Res operator()(Args... args) {
+    Res operator()(Args... args) noexcept(noexcept(pimpl->invoke(std::forward<Args>(args)...))) {
         return pimpl->invoke(std::forward<Args>(args)...);
     }
 };
@@ -62,7 +62,7 @@ struct __function_guide_helper<_Res (_Tp::*)(_Args...) const noexcept(_Nx)> {
 };
 
 template <typename _Res, typename _Tp, bool _Nx, typename... _Args>
-struct __function_guide_helper<_Res (_Tp::*)(_Args...) const &noexcept(_Nx)> {
+struct __function_guide_helper<_Res (_Tp::*)(_Args...) const & noexcept(_Nx)> {
     using type = _Res(_Args...);
 };
 

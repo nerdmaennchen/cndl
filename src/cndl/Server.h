@@ -1,14 +1,13 @@
 #pragma once
 
-#include "simplyfile/Epoll.h"
-#include "simplyfile/socket/Host.h"
+#include "Dispatcher.h"
 
-#include "dispatcher.h"
+#include <simplyfile/Epoll.h>
+#include <simplyfile/socket/Host.h>
 
 #include <mutex>
 
-namespace cndl
-{
+namespace cndl {
 
 struct Server : simplyfile::Epoll {
     Server(std::vector<simplyfile::Host> const& hosts={});
