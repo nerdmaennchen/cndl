@@ -93,6 +93,8 @@ private:
         TimePoint last_pong_ts{};
 
         std::mutex mutex{};
+        
+        PingTimers() {}
     };
     std::optional<PingTimers> auto_ping;
 };
