@@ -1,13 +1,12 @@
 #pragma once
 
-#include "route.h"
-#include "ws_route.h"
-#include "request.h"
-#include "response.h"
-#include "websocket.h"
+#include "Request.h"
+#include "Response.h"
+#include "Route.h"
+#include "Websocket.h"
+#include "WSRoute.h"
 
-namespace cndl
-{
+namespace cndl {
 
 struct Dispatcher {
     using ErrorBodyGenerator = Response::ErrorBodyGenerator;

@@ -1,8 +1,8 @@
-#include "response.h"
+#include "Response.h"
 
 #include <algorithm>
-#include <string_view>
 #include <map>
+#include <string_view>
 
 namespace cndl {
 
@@ -11,14 +11,14 @@ namespace {
 const std::unordered_map<int, std::string_view> code2reason {
     // 1xx switching protocols
     {101, "Switching Protocols"},
-    
+
     // 2xx success
     {200, "OK"},
     {201, "Created"},
     {202, "Accepted"},
     {203, "Non-Authoritative Information"},
     {204, "No Content"},
-    {205, "Reset Content"},  
+    {205, "Reset Content"},
     {206, "Partial Content"},
     {207, "Multi-Status"},
     {208, "Already Reported"},
@@ -86,7 +86,7 @@ const std::unordered_map<int, std::string_view> code2reason {
 
 }
 
-Response::Response(Error const& from_error, ErrorBodyGenerator pageGenerator) 
+Response::Response(Error const& from_error, ErrorBodyGenerator pageGenerator)
   : Response{}
 {
     status_code = from_error.code();
@@ -119,7 +119,7 @@ std::vector<std::byte> Response::serialize() const {
         append_str(serialized, reason_phrase);
     }
     append_str(serialized, "\r\n"sv);
-    
+
     for (auto const& [name, val] : fields) {
         append_str(serialized, name);
         append_str(serialized, ": "sv);

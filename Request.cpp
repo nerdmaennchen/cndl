@@ -1,5 +1,5 @@
-#include "request.h"
-#include "error.h"
+#include "Request.h"
+#include "Error.h"
 #include "overloaded.h"
 
 #include <charconv>
@@ -83,8 +83,8 @@ std::vector<FieldVal> extractFieldVals(std::string_view str, std::string_view de
     return fields;
 }
 
-Request_Header::FieldMap parse_fields(std::string_view fields) {
-    Request_Header::FieldMap fields_map;
+Request::Header::FieldMap parse_fields(std::string_view fields) {
+    Request::Header::FieldMap fields_map;
     std::string_view illegal_chars{" \t\r\n"};
     auto pos = 0U;
     while (pos < fields.size()) {
@@ -119,10 +119,10 @@ Request_Header::FieldMap parse_fields(std::string_view fields) {
     return fields_map;
 }
 
-Request_Header parse_header(std::string_view request) {
+Request::Header parse_header(std::string_view request) {
     using namespace std::string_view_literals;
 
-    Request_Header header;
+    Request::Header header;
 
     auto first_line_end = request.find("\r\n"sv);
     if (first_line_end == std::string_view::npos) {
@@ -143,7 +143,7 @@ Request_Header parse_header(std::string_view request) {
 
     header.method = request.substr(0, method_end);
     header.url = url_unescape(raw_url);
-    header.ressource = header.url.substr(0, header.url.find('?'));
+    header.resource = header.url.substr(0, header.url.find('?'));
     header.version = request.substr(URL_end+1, first_line_end-URL_end-1);
 
     auto trailer_idx = raw_url.find('?');
@@ -183,9 +183,9 @@ Request_Header parse_header(std::string_view request) {
 }
 
 
-Request_Header::BodyArgMap readMultipartBody(std::string_view body, std::string_view boundary) {
+Request::Header::BodyArgMap readMultipartBody(std::string_view body, std::string_view boundary) {
     using namespace std::string_view_literals;
-    Request_Header::BodyArgMap body_args;
+    Request::Header::BodyArgMap body_args;
 
     std::size_t start{body.find(boundary)};
     while (start != std::string_view::npos) {
@@ -226,7 +226,7 @@ Request_Header::BodyArgMap readMultipartBody(std::string_view body, std::string_
             throw Error(400, "missing name field in content-disposition");
         }
 
-        Request_Header::BodyArg ba;
+        Request::Header::BodyArg ba;
         for (auto const& s : cd_split) {
             std::visit(detail::overloaded{
                 [&](std::string const& s) {ba.fields.emplace(s, "");},

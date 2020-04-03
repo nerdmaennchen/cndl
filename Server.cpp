@@ -1,14 +1,13 @@
-#include "server.h"
+#include "Server.h"
 
-#include "simplyfile/Event.h"
+#include "ConnectionHandler.h"
 
-#include "connection_handler.h"
+#include <simplyfile/Event.h>
 
 #include <atomic>
 #include <list>
 
-namespace cndl
-{
+namespace cndl {
 
 struct Server::Pimpl {
     Dispatcher dispatcher;

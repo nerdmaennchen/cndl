@@ -1,13 +1,13 @@
 #pragma once
 
-#include "request.h"
-#include "websocket.h"
-#include "arg_extractors.h"
+#include "Extractor.h"
+#include "Request.h"
+#include "Websocket.h"
 #include "unique_function.h"
 
-#include <type_traits>
 #include <chrono>
 #include <regex>
+#include <type_traits>
 
 namespace cndl {
 
@@ -75,8 +75,8 @@ template <typename T>
 struct WSRoute : WSRouteBase {
     static_assert(std::is_base_of_v<WebsocketHandler, T>, "T must be derived from WebsocketHandler!");
 protected:
-    using SignatureChecker = detail::SignatureChecker<T>; 
-    using ParameterTuple = typename SignatureChecker::ParameterTuple; 
+    using SignatureChecker = detail::SignatureChecker<T>;
+    using ParameterTuple = typename SignatureChecker::ParameterTuple;
     std::regex m_pattern;
 
     T& handler;
@@ -84,9 +84,9 @@ public:
     virtual ~WSRoute() = default;
 
     bool operator()(Request const& request, Websocket& websocket) override {
-        auto ressource = std::string_view{request.header.ressource};
-        std::match_results<decltype(std::begin(ressource))> res;
-        bool success = std::regex_match(begin(ressource), end(ressource), res, m_pattern);
+        auto resource = std::string_view{request.header.resource};
+        std::match_results<decltype(std::begin(resource))> res;
+        bool success = std::regex_match(begin(resource), end(resource), res, m_pattern);
         if (success) {
             if constexpr (SignatureChecker::has_on_open::value) {
                 ParameterTuple args;
@@ -105,7 +105,7 @@ public:
     {}
 
     WSRoute(std::string pattern, T& handler)
-      : WSRoute(std::regex{pattern}, handler) 
+      : WSRoute(std::regex{pattern}, handler)
     {}
 };
 
