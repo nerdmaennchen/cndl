@@ -6,13 +6,13 @@
 #include "sargparse/Parameter.h"
 #include "sargparse/File.h"
 
-#include "cndl/request.h"
-#include "cndl/response.h"
-#include "cndl/error.h"
-#include "cndl/route.h"
-#include "cndl/connection_handler.h"
+#include "cndl/Request.h"
+#include "cndl/Response.h"
+#include "cndl/Error.h"
+#include "cndl/Route.h"
+#include "cndl/ConnectionHandler.h"
 
-#include "cndl/server.h"
+#include "cndl/Server.h"
 
 #include "simplyfile/socket/Socket.h"
 #include "simplyfile/socket/Host.h"
