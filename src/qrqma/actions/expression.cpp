@@ -316,7 +316,7 @@ void action<grammar::ops::cmp_eq>::apply(ContextP &context) {
         [op](types::Bool l, types::Integer r) { return op(l, r); },
         [op](types::Bool l, types::Float r) { return op(l, r); },
         [op](types::Bool l, types::Bool r) { return op(l, r); },
-        [name](auto, auto) { return false; }
+        [](auto, auto) { return false; }
     });
 }
 
@@ -335,7 +335,7 @@ void action<grammar::ops::cmp_neq>::apply(ContextP &context) {
         [op](types::Bool l, types::Integer r) { return op(l, r); },
         [op](types::Bool l, types::Float r) { return op(l, r); },
         [op](types::Bool l, types::Bool r) { return op(l, r); },
-        [name](auto, auto) { return true; }
+        [](auto, auto) { return true; }
     });
 }
 

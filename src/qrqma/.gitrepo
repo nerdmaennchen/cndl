@@ -6,6 +6,6 @@
 [subrepo]
 	remote = git@github.com:nerdmaennchen/qrqma
 	branch = master
-	commit = df1e538596d5ca3f3a53f1190143e9b4af733353
-	parent = 8757243d13db647ad21ce2397c332829cf8c9d31
+	commit = 47a11496e8f7983ab3cefccab7b3e8fe3349595c
+	parent = b9e8c27a8fdee8a4cf0497a7019fd86388f22b28
 	cmdver = 0.3.1
