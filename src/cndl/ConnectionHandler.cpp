@@ -9,7 +9,7 @@
 
 namespace cndl {
 namespace {
-bool flush_response(ConnectionHandler::TransmitJob &job, ConnectionHandler::ClientSocket const& con) {
+bool flush_job(ConnectionHandler::TransmitJob &job, ConnectionHandler::ClientSocket const& con) {
     auto& [out_buf, bytes_sent, cb] = job;
     while (bytes_sent < out_buf.size()) {
         int w = ::send(con, out_buf.data()+bytes_sent, out_buf.size()-bytes_sent, MSG_NOSIGNAL);
@@ -48,13 +48,15 @@ struct ConnectionHandler::Pimpl {
     void write(ByteBuf out_buf, AfterSentCB on_after_sent) {
         std::lock_guard lock{transmit_job_mutex};
         auto job = TransmitJob(std::move(out_buf), 0U, std::move(on_after_sent));
-        if (not transmit_jobs.empty() || not flush_response(job, con)) {
+        if (not transmit_jobs.empty() || not flush_job(job, con)) {
             // update buffer size
             auto const& [out_buf, bytes_sent, cb] = job;
             outBufferSize += out_buf.size() - bytes_sent;
 
             // queue job
             transmit_jobs.emplace_back(std::move(job));
+            // send when the socket is ready
+            epoll.modFD(con, EPOLLIN|EPOLLOUT|EPOLLHUP|EPOLLRDHUP|EPOLLONESHOT);
         }
     }
 
@@ -66,6 +68,8 @@ struct ConnectionHandler::Pimpl {
             close(false);
             return;
         }
+        int mod_flags = EPOLLIN|EPOLLHUP|EPOLLRDHUP|EPOLLONESHOT;
+
         if ((flags & EPOLLIN) and protocol) {
             while (true) {
                 constexpr int read_size = 4096;
@@ -91,25 +95,36 @@ struct ConnectionHandler::Pimpl {
 
         if (flags & EPOLLOUT) {
             std::lock_guard lock{transmit_job_mutex};
-            if (not transmit_jobs.empty()) {
+            bool sent_something = false;
+            while (not transmit_jobs.empty()) {
                 auto job = transmit_jobs.begin();
                 // update buffer size
                 outBufferSize += std::get<1>(*job);
-                bool sendAll = flush_response(*job, con);
+                bool job_sent = flush_job(*job, con);
                 outBufferSize -= std::get<1>(*job);
 
-                if (sendAll) {
-                    transmit_jobs.erase(job);
+                sent_something |= job_sent;
+                if (not job_sent) {
+                    break;
                 }
-            } else if (not protocol) { // if there is nothing to send and no protocol to listen (i.e., when we have flushed all data) bail out
+                transmit_jobs.erase(job);
+            }
+
+            // if there is nothing to send and no protocol to listen (i.e., when we have flushed all data) bail out
+            // the protocol could change during the handling of a callback
+            if (not protocol) { 
                 close(false);
-                return;
+            }
+
+            if (sent_something and not transmit_jobs.empty()) {
+                mod_flags |= EPOLLOUT;
             }
         }
+
         if (con.valid()) {
             // up to here con might have been closed (and thus deregistered from epoll)
             // we only need to rearm the epoll handle if the connection is still open
-            epoll.modFD(con,EPOLLIN|EPOLLOUT|EPOLLHUP|EPOLLRDHUP|EPOLLONESHOT);
+            epoll.modFD(con, mod_flags);
         }
     }
 
