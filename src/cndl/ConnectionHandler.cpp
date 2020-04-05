@@ -98,10 +98,13 @@ struct ConnectionHandler::Pimpl {
             bool sent_something = false;
             while (not transmit_jobs.empty()) {
                 auto job = transmit_jobs.begin();
-                // update buffer size
-                outBufferSize += std::get<1>(*job);
+
+                // update buffer size and flush
+                auto to_send = std::get<0>(*job).size() - std::get<1>(*job);
                 bool job_sent = flush_job(*job, con);
-                outBufferSize -= std::get<1>(*job);
+                auto remaining = std::get<0>(*job).size() - std::get<1>(*job);
+
+                outBufferSize -= to_send - remaining;
 
                 sent_something |= job_sent;
                 if (not job_sent) {
