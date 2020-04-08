@@ -106,7 +106,7 @@ struct WebsocketHandler {
     virtual ~WebsocketHandler() = default;
 
     // to be implemented by the endpoint
-    virtual void onMessage(Websocket& ws, AnyMessage message) = 0;
+    virtual void onMessage([[maybe_unused]] Websocket& ws, [[maybe_unused]] AnyMessage message) {};
     virtual void onClose([[maybe_unused]] Websocket& ws) {}
 
     // you have to implement an onOpen method that accepts the parameters passed from the URL:
