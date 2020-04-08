@@ -74,11 +74,12 @@ ProtocolHandler::ProtocolChange connection_upgrade(Request const& request, Conne
 
     auto ws = std::make_unique<Websocket>(&handler);
 
+    auto& route = handler.getDispatcher().routeWS(request);
     handler.write(response.serialize());
+    route.onOpen(request, *ws);
+    ws->setHandler(route.getHandler());
 
-    auto* target = handler.getDispatcher().routeWS(request, *ws);
-    ws->setHandler(target);
-
+    
     return ProtocolHandler::ProtocolChange{std::move(ws)};
 }
 
