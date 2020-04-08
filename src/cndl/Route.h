@@ -132,7 +132,9 @@ struct GlobalRoute<OptResponse(Request const&, Args...)> : Route<OptResponse(Req
       : GlobalRoute(std::regex{pattern}, std::move(ftor), std::move(options))
     {}
 
-    virtual ~GlobalRoute() = default;
+    virtual ~GlobalRoute() {
+        deregisterRouteGlobally(*this);
+    };
 };
 
 template <typename T, typename _Functor,
@@ -141,5 +143,6 @@ template <typename T, typename _Functor,
 GlobalRoute(T, _Functor, RouteBase::Options={})->GlobalRoute<_Signature>;
 
 void registerRouteGlobally(RouteBase&);
+void deregisterRouteGlobally(RouteBase&);
 
 }
