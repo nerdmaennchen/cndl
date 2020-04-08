@@ -64,11 +64,7 @@ ServerSocket::~ServerSocket() {
 ClientSocket ServerSocket::accept() const {
 	Host h = host;
 	int _fd = ::accept(*this, reinterpret_cast<struct sockaddr*>(&h.sockaddr), &h.sockaddrLen);
-	ClientSocket socket{_fd, h};
-	if (not socket.valid()) {
-		throw std::runtime_error("cannot accept incomming socket");
-	}
-	return socket;
+	return ClientSocket {_fd, h};
 }
 
 void ServerSocket::listen() {
