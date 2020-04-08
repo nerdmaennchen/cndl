@@ -125,7 +125,7 @@ struct GlobalRoute<OptResponse(Request const&, Args...)> : Route<OptResponse(Req
     GlobalRoute(std::regex pattern, FuncT ftor, Options options={})
       : SuperClass(std::move(pattern), std::move(ftor), std::move(options))
     {
-        registerRouteGlobally(this);
+        registerRouteGlobally(*this);
     }
 
     GlobalRoute(std::string pattern, FuncT ftor, Options options={})
