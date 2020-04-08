@@ -130,11 +130,6 @@ template <typename T>
 struct WSRoute : WSRouteBase {
     static_assert(std::is_base_of_v<WebsocketHandler, T>, "T must be derived from WebsocketHandler!");
 protected:
-
-    // using SignatureChecker_canOpen = detail::SignatureChecker_canOpen<T>;
-    // using ArgExtractor_canOpen   = typename SignatureChecker_canOpen::ArgExtractor;
-    // using ParameterTuple_canOpen = typename SignatureChecker_canOpen::ParameterTuple;
-
     std::regex m_pattern;
 
     T& handler;
@@ -192,6 +187,24 @@ template <typename _Functor,
               decltype(&_Functor::operator())>::type>
 WSRoute(std::regex, _Functor)->WSRoute<_Functor>;
 
-// template <typename T> void registerRouteGlobally(WSRouteBase*);
+template <typename T>
+struct GlobalWSRoute : WSRoute<T> {
+    GlobalWSRoute(std::regex pattern, T& handler)
+      : WSRoute<T>(std::move(pattern), handler)
+    {
+        registerRouteGlobally(*this);
+    }
+
+    GlobalWSRoute(std::string pattern, T& handler)
+      : GlobalWSRoute(std::regex{pattern}, handler)
+    {}
+
+    virtual ~GlobalWSRoute() {
+        deregisterRouteGlobally(*this);
+    }
+};
+
+void registerRouteGlobally(WSRouteBase& route);
+void deregisterRouteGlobally(WSRouteBase& route);
 
 }
