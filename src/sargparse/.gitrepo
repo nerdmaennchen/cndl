@@ -7,5 +7,5 @@
 	remote = git@github.com:gottliebtfreitag/sargparse
 	branch = master
 	commit = 1e998e255a605fb14a911afd0525d5480f4a397e
-	parent = 45e246d4a18e9c47e3212cbbb1dd931a1799782e
+	parent = 8a52e5bf9e9a2fd02fe15285254814eb747f0505
 	cmdver = 0.3.1
