@@ -7,5 +7,5 @@
 	remote = git@github.com:nerdmaennchen/qrqma
 	branch = master
 	commit = 47a11496e8f7983ab3cefccab7b3e8fe3349595c
-	parent = b9e8c27a8fdee8a4cf0497a7019fd86388f22b28
+	parent = 844966ef7ebfe881376adcc0679c0965d95d05e6
 	cmdver = 0.3.1
