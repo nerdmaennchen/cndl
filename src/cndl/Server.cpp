@@ -35,21 +35,24 @@ struct Server::Pimpl {
     void listen(std::vector<simplyfile::Host> const& hosts) {
         for (auto const& host : hosts) {
             auto& ss = server_sockets.emplace_back(host);
-            int ss_fd = ss;
-            m_epoll.addFD(ss_fd, [=, &ss](int flags) {
+            ss.setFlags(O_NONBLOCK);
+            m_epoll.addFD(ss, [=, &ss](int flags) {
                 if (flags != EPOLLIN) {
                     m_epoll.rmFD(ss, false);
                     return;
                 }
-                auto client = ss.accept();
-                if (not client) {
-                    return;
-                }
-                client.setFlags(O_NONBLOCK);
+                while (true) {
+                    auto client = ss.accept();
+                    if (not client.valid()) {
+                        break;
+                    }
+                    client.setFlags(O_NONBLOCK);
 
-                int fd = client;
-                m_epoll.addFD(fd, ConnectionHandler{std::move(client), m_epoll, dispatcher}, EPOLLIN|EPOLLOUT|EPOLLHUP|EPOLLRDHUP|EPOLLONESHOT);
-            }, EPOLLIN|EPOLLET);
+                    int fd = client;
+                    m_epoll.addFD(fd, ConnectionHandler{std::move(client), m_epoll, dispatcher}, EPOLLIN|EPOLLHUP|EPOLLRDHUP|EPOLLONESHOT);
+                }
+                m_epoll.modFD(ss, EPOLLIN|EPOLLONESHOT);
+            }, EPOLLIN|EPOLLONESHOT);
             ss.listen();
         }
     }

@@ -5,7 +5,7 @@
 
 namespace cndl {
 
-void registerRouteGlobally(RouteBase* route) {
+void registerRouteGlobally(RouteBase& route) {
     Server::getGlobalServer().getDispatcher().addRoute(route);
 }
 

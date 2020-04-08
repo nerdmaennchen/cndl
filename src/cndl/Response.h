@@ -36,6 +36,10 @@ struct Response {
         std::transform(begin(body), end(body), std::back_inserter(message_body), [](char c) { return std::byte{static_cast<unsigned char>(c)}; });
     }
 
+    void setContentTypeFromExtension(std::string_view extension);
+    
+    static std::string_view contentTypeLookup(std::string_view extension);
+
     std::vector<std::byte> serialize() const;
 };
 

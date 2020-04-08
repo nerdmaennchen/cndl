@@ -140,6 +140,6 @@ template <typename T, typename _Functor,
               decltype(&_Functor::operator())>::type>
 GlobalRoute(T, _Functor, RouteBase::Options={})->GlobalRoute<_Signature>;
 
-void registerRouteGlobally(RouteBase*);
+void registerRouteGlobally(RouteBase&);
 
 }

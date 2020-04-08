@@ -46,8 +46,8 @@ struct ConnectionHandler::Pimpl {
     {}
 
     void write(ByteBuf out_buf, AfterSentCB on_after_sent) {
-        std::lock_guard lock{transmit_job_mutex};
         auto job = TransmitJob(std::move(out_buf), 0U, std::move(on_after_sent));
+        std::lock_guard lock{transmit_job_mutex};
         if (not transmit_jobs.empty() || not flush_job(job, con)) {
             // update buffer size
             auto const& [out_buf, bytes_sent, cb] = job;
@@ -118,8 +118,11 @@ struct ConnectionHandler::Pimpl {
             if (not protocol) { 
                 close(false);
             }
+        }
 
-            if (sent_something and not transmit_jobs.empty()) {
+        {
+            std::lock_guard lock{transmit_job_mutex};
+            if (not transmit_jobs.empty()) {
                 mod_flags |= EPOLLOUT;
             }
         }

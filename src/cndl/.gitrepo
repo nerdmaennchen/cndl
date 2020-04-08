@@ -6,6 +6,6 @@
 [subrepo]
 	remote = git@github.com:nerdmaennchen/cndl
 	branch = master
-	commit = 9098b86745b04069bb0d7fe635cb375f3ae28d69
-	parent = 2c260ba9fc34e80761755d5496e7e43e1fd28d95
+	commit = 247c220bff7cfaaae7256f80fe1db0476c907a94
+	parent = 1ffd236c18d690464890da05ab19e0ed408e7561
 	cmdver = 0.3.1
