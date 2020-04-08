@@ -67,7 +67,7 @@ cndl::GlobalRoute template_route{"/(.*)?", [](cndl::Request const& request, std:
 struct : cndl::WebsocketHandler {
     using Websocket = cndl::Websocket;
     using Request = cndl::Request;
-    void onMessage([[maybe_unused]] Websocket& ws, [[maybe_unused]] AnyMessage msg) override {
+    void onMessage(Websocket& ws, AnyMessage msg) override {
         if (std::holds_alternative<TextMessage>(msg)) {
             auto txt = std::get<TextMessage>(msg);
             std::cout << txt << std::endl;
@@ -81,11 +81,10 @@ struct : cndl::WebsocketHandler {
         ws.send(msg);
     }
 
-    bool onOpen([[maybe_unused]] Request const& request, [[maybe_unused]] Websocket& ws, [[maybe_unused]] int magic) {
+    void onOpen(Request const& request, [[maybe_unused]] Websocket& ws, [[maybe_unused]] int magic) {
         std::cout << "socket connected " << request.header.url << std::endl;
         using namespace std::literals::chrono_literals;
         ws.setAutoPing(1000ms, 100ms);
-        return true;
     }
 
     void onClose([[maybe_unused]] Websocket& ws) override {
@@ -103,7 +102,7 @@ void demo()
     server.listen(simplyfile::getHosts("localhost", "8080"));
     
     cndl::WSRoute wsroute{std::regex{R"(/test/(\d+)/)"}, echo_handler};
-    server.getDispatcher().addRoute(&wsroute);
+    server.getDispatcher().addRoute(wsroute);
 
     server.loop_forever();
 }
