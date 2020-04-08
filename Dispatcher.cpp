@@ -38,39 +38,39 @@ Response Dispatcher::route(Request const& request) noexcept {
     return Response{404, pimpl->error_body_generator};
 }
 
-WebsocketHandler* Dispatcher::routeWS(Request const& request, Websocket& ws) {
+WSRouteBase& Dispatcher::routeWS(Request const& request) {
     std::lock_guard lock{pimpl->ws_mutex};
     for (auto* r : pimpl->ws_routes) {
-        auto accept = (*r)(request, ws);
+        auto accept = r->canOpen(request);
         if (accept) {
-            return r->getHandler();
+            return *r;
         }
     }
     throw Error{404};
 }
 
-void Dispatcher::addRoute(RouteBase* r) {
+void Dispatcher::addRoute(RouteBase& r) {
     std::lock_guard lock{pimpl->routes_mutex};
     auto& routes = pimpl->routes;
-    routes.emplace_back(r);
+    routes.emplace_back(&r);
 }
 
-void Dispatcher::removeRoute(RouteBase* r) {
+void Dispatcher::removeRoute(RouteBase& r) {
     std::lock_guard lock{pimpl->routes_mutex};
     auto& routes = pimpl->routes;
-    routes.erase(std::find(begin(routes), end(routes), r));
+    routes.erase(std::find(begin(routes), end(routes), &r));
 }
 
-void Dispatcher::addRoute(WSRouteBase* r) {
+void Dispatcher::addRoute(WSRouteBase& r) {
     std::lock_guard lock{pimpl->ws_mutex};
     auto& routes = pimpl->ws_routes;
-    routes.emplace_back(r);
+    routes.emplace_back(&r);
 }
 
-void Dispatcher::removeRoute(WSRouteBase* r) {
+void Dispatcher::removeRoute(WSRouteBase& r) {
     std::lock_guard lock{pimpl->ws_mutex};
     auto& routes = pimpl->ws_routes;
-    routes.erase(std::find(begin(routes), end(routes), r));
+    routes.erase(std::find(begin(routes), end(routes), &r));
 }
 
 Dispatcher::ErrorBodyGenerator const& Dispatcher::getErrorBodyGenerator() const {

@@ -15,13 +15,13 @@ struct Dispatcher {
     ~Dispatcher();
 
     Response route(Request const& request) noexcept;
-    WebsocketHandler* routeWS(Request const& request, Websocket& ws);
+    WSRouteBase& routeWS(Request const& request);
 
-    void addRoute(RouteBase* r);
-    void removeRoute(RouteBase* r);
+    void addRoute(RouteBase& r);
+    void removeRoute(RouteBase& r);
 
-    void addRoute(WSRouteBase* r);
-    void removeRoute(WSRouteBase* r);
+    void addRoute(WSRouteBase& r);
+    void removeRoute(WSRouteBase& r);
 
     ErrorBodyGenerator const& getErrorBodyGenerator() const;
 private:

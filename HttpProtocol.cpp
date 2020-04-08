@@ -35,7 +35,7 @@ bool ignore_case_cmp(std::string_view l, std::string_view r) {
 
 }
 
-std::pair<Response, ProtocolHandler::ProtocolChange> connection_upgrade(Request const& request, ConnectionHandler& handler) {
+ProtocolHandler::ProtocolChange connection_upgrade(Request const& request, ConnectionHandler& handler) {
     auto const& header = request.header;
     if (header.method != "GET") {
         throw Error{405};
@@ -74,9 +74,12 @@ std::pair<Response, ProtocolHandler::ProtocolChange> connection_upgrade(Request 
 
     auto ws = std::make_unique<Websocket>(&handler);
 
+    handler.write(response.serialize());
+
     auto* target = handler.getDispatcher().routeWS(request, *ws);
     ws->setHandler(target);
-    return {response, ProtocolHandler::ProtocolChange{std::move(ws)}};
+
+    return ProtocolHandler::ProtocolChange{std::move(ws)};
 }
 
 }
@@ -86,6 +89,7 @@ HttpProtocol::ConsumeResult HttpProtocol::onDataReceived(ByteView received) {
     auto& dispatcher = connection_handler->getDispatcher();
     ProtocolHandler::ProtocolChange protocol_change;
 
+    // std::cout << std::string_view(reinterpret_cast<char const*>(received.data()), received.size()) << std::endl;
     while (not protocol_change) {
         try {
             if (not header) {
@@ -150,10 +154,9 @@ HttpProtocol::ConsumeResult HttpProtocol::onDataReceived(ByteView received) {
                     }) != std::end(split);
                 }
                 Request request{std::move(processed_header), std::move(message)};
+                // std::cout << request.header.method << " " << request.header.url << std::endl;
                 if (con_upgrade) {
-                    auto [response, sp] = connection_upgrade(std::move(request), *connection_handler);
-                    connection_handler->write(response.serialize());
-                    protocol_change = std::move(sp);
+                    protocol_change = connection_upgrade(std::move(request), *connection_handler);
                     break;
                 } else {
                     // dispatch request
