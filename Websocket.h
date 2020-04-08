@@ -109,10 +109,15 @@ struct WebsocketHandler {
     virtual void onMessage([[maybe_unused]] Websocket& ws, [[maybe_unused]] AnyMessage message) {};
     virtual void onClose([[maybe_unused]] Websocket& ws) {}
 
-    // you have to implement an onOpen method that accepts the parameters passed from the URL:
-    // bool onOpen(Request const&, Websocket&, urlargs...)
-    // onOpen returns true if the incoming socket shall be accepted
+    // you have to implement an canOpen and onOpen methods that accepts the parameters passed from the URL:
 
+    // bool canOpen(Request const&, urlargs...)
+    // canOpen returns true if a socket directed to urlargs socket shall be accepted
+
+    // called when the websocket connection is established 
+    // void onOpen(Request const&, Websocket&, urlargs...)
+    
+    
     virtual void onPing(Websocket& ws, BinMessage message);
     virtual void onPong(Websocket& ws, BinMessage message);
 };
