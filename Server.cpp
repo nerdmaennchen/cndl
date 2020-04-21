@@ -22,7 +22,7 @@ struct Server::Pimpl {
 
     Epoll& m_epoll;
     Pimpl(Epoll& epoll) : m_epoll{epoll} {
-        m_epoll.addFD(stopFD, [=](int){ stopFD.get(); }, EPOLLIN|EPOLLET);
+        m_epoll.addFD(stopFD, [=](int){ stopFD.get(); }, EPOLLIN|EPOLLET, "cndl::stop");
     }
 
     ~Pimpl() {
@@ -49,10 +49,10 @@ struct Server::Pimpl {
                     client.setFlags(O_NONBLOCK);
 
                     int fd = client;
-                    m_epoll.addFD(fd, ConnectionHandler{std::move(client), m_epoll, dispatcher}, EPOLLIN|EPOLLHUP|EPOLLRDHUP|EPOLLONESHOT);
+                    m_epoll.addFD(fd, ConnectionHandler{std::move(client), m_epoll, dispatcher}, EPOLLIN|EPOLLHUP|EPOLLRDHUP|EPOLLONESHOT, "cndl::io");
                 }
                 m_epoll.modFD(ss, EPOLLIN|EPOLLONESHOT);
-            }, EPOLLIN|EPOLLONESHOT);
+            }, EPOLLIN|EPOLLONESHOT, "cndl::accept");
             ss.listen();
         }
     }
