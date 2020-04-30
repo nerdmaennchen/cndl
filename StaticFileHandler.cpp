@@ -63,7 +63,7 @@ OptResponse StaticFileHandler::operator()(Request const& request, std::string co
     response.setContentTypeFromExtension(std::filesystem::path{ressource}.extension().native());
 
     if (auto it = request.header.fields.find("if-modified-since"); it != request.header.fields.end()) {
-        struct tm req_tm;
+        struct tm req_tm{};
         strptime(it->second.c_str(), date_format_string.data(), &req_tm);
         time_t req_time = mktime(&req_tm);
         if (req_time >= statbuf.st_mtim.tv_sec) {
