@@ -80,4 +80,14 @@ OptResponse StaticFileHandler::operator()(Request const& request, std::string co
     return response;
 }
 
+bool StaticFileHandler::can_serve_ressource(std::string const& ressource) const {
+    auto pat = (base_dir / ressource).native();
+    std::FILE* f = std::fopen(pat.c_str(), "r");
+    if (not f) {
+        return false;
+    }
+    std::fclose(f);
+    return true;
+}
+
 }
