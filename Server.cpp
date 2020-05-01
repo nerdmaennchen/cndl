@@ -32,29 +32,27 @@ struct Server::Pimpl {
         }
     }
 
-    void listen(std::vector<simplyfile::Host> const& hosts) {
-        for (auto const& host : hosts) {
-            auto& ss = server_sockets.emplace_back(host);
-            ss.setFlags(O_NONBLOCK);
-            m_epoll.addFD(ss, [=, &ss](int flags) {
-                if (flags != EPOLLIN) {
-                    m_epoll.rmFD(ss, false);
-                    return;
+    void listen(simplyfile::Host const& host, int backlog) {
+        auto& ss = server_sockets.emplace_back(host);
+        ss.setFlags(O_NONBLOCK);
+        m_epoll.addFD(ss, [=, &ss](int flags) {
+            if (flags != EPOLLIN) {
+                m_epoll.rmFD(ss, false);
+                return;
+            }
+            while (true) {
+                auto client = ss.accept();
+                if (not client.valid()) {
+                    break;
                 }
-                while (true) {
-                    auto client = ss.accept();
-                    if (not client.valid()) {
-                        break;
-                    }
-                    client.setFlags(O_NONBLOCK);
+                client.setFlags(O_NONBLOCK);
 
-                    int fd = client;
-                    m_epoll.addFD(fd, ConnectionHandler{std::move(client), m_epoll, dispatcher}, EPOLLIN|EPOLLHUP|EPOLLRDHUP|EPOLLONESHOT, "cndl::io");
-                }
-                m_epoll.modFD(ss, EPOLLIN|EPOLLONESHOT);
-            }, EPOLLIN|EPOLLONESHOT, "cndl::accept");
-            ss.listen();
-        }
+                int fd = client;
+                m_epoll.addFD(fd, ConnectionHandler{std::move(client), m_epoll, dispatcher}, EPOLLIN|EPOLLHUP|EPOLLRDHUP|EPOLLONESHOT, "cndl::io");
+            }
+            m_epoll.modFD(ss, EPOLLIN|EPOLLONESHOT);
+        }, EPOLLIN|EPOLLONESHOT, "cndl::accept");
+        ss.listen(backlog);
     }
 };
 
@@ -86,12 +84,15 @@ void Server::loop_forever() {
     pimpl->stop_cv.notify_all();
 }
 
-void Server::listen(std::vector<simplyfile::Host> const& hosts) {
-    pimpl->listen(hosts);
+void Server::listen(simplyfile::Host const& host, int backlog) {
+    pimpl->listen(host, backlog);
 }
 
-Server::Server(std::vector<simplyfile::Host> const& hosts) : pimpl{std::make_unique<Pimpl>(*this)} {
-    pimpl->listen(hosts);
+Server::Server() : pimpl{std::make_unique<Pimpl>(*this)} {
+}
+
+Server::Server(simplyfile::Host const& host, int backlog) : pimpl{std::make_unique<Pimpl>(*this)} {
+    pimpl->listen(host, backlog);
 }
 
 Server::~Server() {
