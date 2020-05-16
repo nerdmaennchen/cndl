@@ -1,6 +1,7 @@
 #include "base64.h"
 
 #include <array>
+#include <string>
 
 using namespace std::string_view_literals;
 
