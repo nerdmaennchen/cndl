@@ -22,7 +22,7 @@ struct Server::Pimpl {
 
     Epoll& m_epoll;
     Pimpl(Epoll& epoll) : m_epoll{epoll} {
-        m_epoll.addFD(stopFD, [=](int){ stopFD.get(); }, EPOLLIN|EPOLLET, "cndl::stop");
+        m_epoll.addFD(stopFD, [this](int){ stopFD.get(); }, EPOLLIN|EPOLLET, "cndl::stop");
     }
 
     ~Pimpl() {
@@ -35,7 +35,7 @@ struct Server::Pimpl {
     void listen(simplyfile::Host const& host, int backlog) {
         auto& ss = server_sockets.emplace_back(host);
         ss.setFlags(O_NONBLOCK);
-        m_epoll.addFD(ss, [=, &ss](int flags) {
+        m_epoll.addFD(ss, [this, &ss](int flags) {
             if (flags != EPOLLIN) {
                 m_epoll.rmFD(ss, false);
                 return;
