@@ -41,7 +41,9 @@ struct : cndl::WebsocketHandler {
 int main()
 {
     cndl::Server& server = cndl::Server::getGlobalServer();
-    server.listen(simplyfile::getHosts("localhost", "8080")); // listen on localhost (ipv4 and ipv6 if available)
+    for (auto host : simplyfile::getHosts("localhost", "8080")) {
+        server.listen(host); // listen on localhost (ipv4 and ipv6 if available)
+    }
 
     cndl::WSRoute wsroute{std::regex{R"(/(\d+)/)"}, echo_handler}; // route requests to /[number]/ to the echo_handler (onConnect will be called with the value of [number])
     server.getDispatcher().addRoute(&wsroute); // hook the route to the server (you can have multiple routes fro a single endpoint) 

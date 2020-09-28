@@ -99,8 +99,10 @@ struct : cndl::WebsocketHandler {
 void demo()
 {
     cndl::Server& server = cndl::Server::getGlobalServer();
-    server.listen(simplyfile::getHosts("localhost", "8080"));
-    
+    for (auto host : simplyfile::getHosts("localhost", "8080")) {
+        server.listen(host);
+    }
+
     cndl::WSRoute wsroute{std::regex{R"(/test/(\d+)/)"}, echo_handler};
     server.getDispatcher().addRoute(wsroute);
 
