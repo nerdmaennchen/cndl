@@ -22,7 +22,7 @@ struct Server::Pimpl {
 
     Epoll& m_epoll;
     Pimpl(Epoll& epoll) : m_epoll{epoll} {
-        m_epoll.addFD(stopFD, [=](int){ stopFD.get(); }, EPOLLIN|EPOLLET);
+        m_epoll.addFD(stopFD, [this](int){ stopFD.get(); }, EPOLLIN|EPOLLET);
     }
 
     ~Pimpl() {
@@ -36,7 +36,7 @@ struct Server::Pimpl {
         for (auto const& host : hosts) {
             auto& ss = server_sockets.emplace_back(host);
             int ss_fd = ss;
-            m_epoll.addFD(ss_fd, [=, &ss](int flags) {
+            m_epoll.addFD(ss_fd, [this, &ss](int flags) {
                 if (flags != EPOLLIN) {
                     m_epoll.rmFD(ss, false);
                     return;
