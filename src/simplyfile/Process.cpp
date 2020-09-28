@@ -1,6 +1,7 @@
 #include "Process.h"
 #include <cstring>
 #include <memory>
+#include <stdexcept>
 
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -39,6 +40,9 @@ Process::Process(std::string_view command, std::vector<std::string> const& args)
         dup2(p2c_r, STDIN_FILENO);
         dup2(c2p_w, STDOUT_FILENO);
         dup2(c2p_e_w, STDERR_FILENO);
+        p2c_r.close();
+        c2p_w.close();
+        c2p_e_w.close();
 
         std::vector<char const*> argBuffer(args.size()+2, nullptr);
         argBuffer[0] = command.data();

@@ -121,7 +121,7 @@ Epoll::Epoll()
 	if (not valid()) {
 		throw std::runtime_error("cannot create epollfd");
 	}
-	addFD(pimpl->eventFD, [=](int){
+	addFD(pimpl->eventFD, [this](int){
 		pimpl->eventFD.get();
 		modFD(pimpl->eventFD, EPOLLIN|EPOLLONESHOT);
 	}, EPOLLIN|EPOLLONESHOT, "self_wakeup");
@@ -236,7 +236,7 @@ void Epoll::dispatch(std::vector<struct epoll_event> const& events) {
 				}};
 				wrapper.info->cb(wrapper.event.events);
 			} catch (...) {
-				std::throw_with_nested(std::runtime_error(removeAnonNamespace(demangle(wrapper.info->cb.target_type())) + " threw an exception:"));
+				std::throw_with_nested(std::runtime_error(wrapper.info->name + " threw an exception:"));
 			}
 		}
 	}

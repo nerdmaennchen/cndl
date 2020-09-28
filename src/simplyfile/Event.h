@@ -2,6 +2,8 @@
 
 #include "FileDescriptor.h"
 
+#include <stdexcept>
+
 #include <sys/eventfd.h>
 
 namespace simplyfile
