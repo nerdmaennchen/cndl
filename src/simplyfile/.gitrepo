@@ -6,6 +6,8 @@
 [subrepo]
 	remote = git@github.com:gottliebtfreitag/simplyfile
 	branch = master
-	commit = 20d6f919d3ded7c93ae5ab80f31e87e60fb5dd8f
-	parent = 368cf2dcda24403899e5c1aa2d5c6c4f5e6f5f03
-	cmdver = 0.3.1
+	commit = 9b2987aec0eb7e3a38a514f5e4814e465bcbfaec
+	parent = 24f8bdf3ed4c73c6113cf25892e00d7c67b729d3
+	cmdver = 0.4.1
+	method = merge
+	update = auto

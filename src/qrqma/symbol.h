@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <vector>
 #include <variant>
+#include <string>
 
 namespace qrqma {
 namespace actions {

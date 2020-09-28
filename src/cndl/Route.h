@@ -111,7 +111,7 @@ public:
 template <typename _Functor,
           typename _Signature = typename detail::__function_guide_helper<
               decltype(&_Functor::operator())>::type>
-Route(std::regex, _Functor, RouteBase::Options={})->Route<_Signature>;
+Route(std::regex, _Functor, RouteBase::Options)->Route<_Signature>;
 
 template <typename T>
 struct GlobalRoute;
@@ -140,7 +140,7 @@ struct GlobalRoute<OptResponse(Request const&, Args...)> : Route<OptResponse(Req
 template <typename T, typename _Functor,
           typename _Signature = typename detail::__function_guide_helper<
               decltype(&_Functor::operator())>::type>
-GlobalRoute(T, _Functor, RouteBase::Options={})->GlobalRoute<_Signature>;
+GlobalRoute(T, _Functor, RouteBase::Options)->GlobalRoute<_Signature>;
 
 void registerRouteGlobally(RouteBase&);
 void deregisterRouteGlobally(RouteBase&);

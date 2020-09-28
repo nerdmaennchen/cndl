@@ -3,6 +3,7 @@
 #include <cstring>
 #include <time.h>
 
+#include <stdexcept>
 #include <cerrno>
 #include <string>
 

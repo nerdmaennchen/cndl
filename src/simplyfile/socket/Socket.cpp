@@ -1,7 +1,9 @@
+#include "Socket.h"
+
 #include <sys/ioctl.h>
 #include <cstring>
 #include <cerrno>
-#include "Socket.h"
+#include <stdexcept>
 #include <unistd.h>
 #include <sys/un.h>
 
@@ -67,8 +69,8 @@ ClientSocket ServerSocket::accept() const {
 	return ClientSocket {_fd, h};
 }
 
-void ServerSocket::listen() {
-	if (::listen(*this, 0)) {
+void ServerSocket::listen(int backlog) {
+	if (::listen(*this, backlog)) {
 		throw std::runtime_error("cannot listen on socket " + std::string(strerror(errno)));
 	}
 }
