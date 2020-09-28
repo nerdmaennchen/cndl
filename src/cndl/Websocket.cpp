@@ -139,17 +139,17 @@ void Websocket::send(BinMessage message, OpCode opcode, bool fin, AfterSentCB on
 
 void Websocket::send(AnyMessage message) {
     std::visit(detail::overloaded {
-        [=](TextMessage msg) {
+        [this](TextMessage msg) {
             send({reinterpret_cast<std::byte const*>(msg.data()), msg.size()}, OpCode::text, true);
         },
-        [=](BinMessage msg) {
+        [this](BinMessage msg) {
             send(msg, OpCode::binary, true);
         }
     }, message);
 }
 
 void Websocket::ping(AnyMessage message, AfterSentCB on_after_sent) {
-    std::visit([=, &on_after_sent](auto msg) {
+    std::visit([this, &on_after_sent](auto msg) {
         if (msg.size() > 125) {
             throw std::invalid_argument("ping payload too long");
         }
@@ -203,12 +203,12 @@ void Websocket::setAutoPing(std::chrono::milliseconds ping_interval, std::chrono
     std::lock_guard lock{auto_ping->mutex};
     auto_ping->ping_timer.reset(std::chrono::duration_cast<PingTimers::Duration>(ping_interval));
 
-    loop.addFD(auto_ping->timeout_timer, [=](int){
+    loop.addFD(auto_ping->timeout_timer, [this](int){
         close(CloseCode::normal, "ping timeout");
     }, EPOLLIN|EPOLLET);
 
-    loop.addFD(auto_ping->ping_timer, [=](int){
-        ping("ping?", [=]{
+    loop.addFD(auto_ping->ping_timer, [this, timeout](int){
+        ping("ping?", [this, timeout]{
             auto_ping->timeout_timer.reset(timeout, true);
         });
         auto_ping->ping_timer.getElapsed(); // clear the ping timer

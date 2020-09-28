@@ -10,12 +10,13 @@
 namespace cndl {
 
 struct Server : simplyfile::Epoll {
-    Server(std::vector<simplyfile::Host> const& hosts={});
+    Server(simplyfile::Host const& host, int backlog=0);
+    Server();
     ~Server();
     Server(Server&&) noexcept;
     Server& operator=(Server&&) noexcept;
 
-    void listen(std::vector<simplyfile::Host> const& hosts);
+    void listen(simplyfile::Host const& host, int backlog=0);
 
     // calls work() in a loop until stop_looping() is called
     void loop_forever();
