@@ -28,9 +28,13 @@ struct : cndl::WebsocketHandler {
         ws.send(msg);
     }
 
-    bool onOpen([[maybe_unused]] Request const& request, [[maybe_unused]] Websocket& ws, [[maybe_unused]] int magic) {
-        std::cout << "socket connected " << request.header.url << std::endl;
+    bool canOpen(Request const& request, [[maybe_unused]] int magic) {
+        std::cout << "socket connection request " << std::endl;
         return true;
+    }
+
+    void onOpen([[maybe_unused]] Request const& request, [[maybe_unused]] Websocket& ws, [[maybe_unused]] int magic) {
+        std::cout << "socket connected " << request.header.url << std::endl;
     }
 
     void onClose([[maybe_unused]] Websocket& ws) override {
