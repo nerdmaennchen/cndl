@@ -56,7 +56,7 @@ std::string Template::operator()(symbol::SymbolTable symbols) const {
         rootC.setSymbol(k, actions::types::ConstantExpression{ [v=std::move(v)] { return v; } });
     }
     pimpl->symbol_context.setParentContext(&rootC);
-    internal::Finally reset {[=]{
+    internal::Finally reset {[this]{
         pimpl->symbol_context.setParentContext(nullptr);
     }};
     return std::move(pimpl->render_context(false).rendered);
