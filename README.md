@@ -28,9 +28,13 @@ struct : cndl::WebsocketHandler {
         ws.send(msg);
     }
 
-    bool onOpen([[maybe_unused]] Request const& request, [[maybe_unused]] Websocket& ws, [[maybe_unused]] int magic) {
-        std::cout << "socket connected " << request.header.url << std::endl;
+    bool canOpen(Request const& request, [[maybe_unused]] int magic) {
+        std::cout << "socket connection request " << std::endl;
         return true;
+    }
+
+    void onOpen([[maybe_unused]] Request const& request, [[maybe_unused]] Websocket& ws, [[maybe_unused]] int magic) {
+        std::cout << "socket connected " << request.header.url << std::endl;
     }
 
     void onClose([[maybe_unused]] Websocket& ws) override {
@@ -41,7 +45,9 @@ struct : cndl::WebsocketHandler {
 int main()
 {
     cndl::Server& server = cndl::Server::getGlobalServer();
-    server.listen(simplyfile::getHosts("localhost", "8080")); // listen on localhost (ipv4 and ipv6 if available)
+    for (auto host : simplyfile::getHosts("localhost", "8080")) {
+        server.listen(host); // listen on localhost (ipv4 and ipv6 if available)
+    }
 
     cndl::WSRoute wsroute{std::regex{R"(/(\d+)/)"}, echo_handler}; // route requests to /[number]/ to the echo_handler (onConnect will be called with the value of [number])
     server.getDispatcher().addRoute(&wsroute); // hook the route to the server (you can have multiple routes fro a single endpoint) 
