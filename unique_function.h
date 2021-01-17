@@ -10,13 +10,13 @@ template <typename Res, typename... Args> struct unique_func<Res(Args...)> {
 private:
     struct PimplBase {
         virtual ~PimplBase() = default;
-        virtual Res invoke(Args &&... args) = 0;
+        virtual Res invoke(Args &&... args) const = 0;
     };
 
     template <typename Functor> struct TypedPimpl : PimplBase {
         Functor ftor;
         TypedPimpl(Functor _ftor) : ftor{std::move(_ftor)} {}
-        Res invoke(Args &&... args) override {
+        Res invoke(Args &&... args) const override {
             return ftor(std::forward<Args>(args)...);
         }
     };
@@ -37,7 +37,7 @@ public:
         return static_cast<bool>(pimpl);
     }
 
-    Res operator()(Args... args) noexcept(noexcept(pimpl->invoke(std::forward<Args>(args)...))) {
+    Res operator()(Args... args) const noexcept(noexcept(pimpl->invoke(std::forward<Args>(args)...))) {
         return pimpl->invoke(std::forward<Args>(args)...);
     }
 };
