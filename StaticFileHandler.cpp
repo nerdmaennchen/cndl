@@ -10,7 +10,7 @@ namespace cndl {
 
 namespace {
 using namespace std::string_view_literals;
-constexpr auto date_format_string = "%a, %d %b %Y %H:%M:%S GMT"sv;
+constexpr auto date_format_string = "%a, %d %b %Y %H:%M:%S %Z"sv;
 
 template<typename Func>
 struct Finally final {
@@ -32,7 +32,7 @@ std::string mkdatestr(struct tm const& tm) {
 
 std::string mkdatestr(struct timespec const& ts) {
     struct tm tm;
-    gmtime_r(&ts.tv_sec, &tm);
+    localtime_r(&ts.tv_sec, &tm);
     return mkdatestr(tm);
 }
 
