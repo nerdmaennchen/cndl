@@ -190,6 +190,7 @@ const std::unordered_map<std::string_view, std::string_view> extension_lookup_ta
     {"asf", "video/x-ms-asf"},
     {"wmv", "video/x-ms-wmv"},
     {"avi", "video/x-msvideo"},
+    {"wasm", "application/wasm"},
 };
 
 }
