@@ -55,7 +55,7 @@ struct Websocket : ProtocolHandler {
     void onPeerClose() override;
 
     // called from the application
-    void send(AnyMessage message);
+    void send(AnyMessage message, AfterSentCB on_after_sent={});
     void ping(AnyMessage message, AfterSentCB on_after_sent={}); // max payload length is 125
 
     void close(CloseCode code=CloseCode::normal, AnyMessage reason="");
