@@ -74,10 +74,15 @@ Server& Server::operator=(Server&& rhs) noexcept {
 
 
 Server& Server::getGlobalServer() {
-    static simplyfile::Epoll global_epoll;
-    static Server global_instance{global_epoll};
+    static Server global_instance{getGlobalEpoll()};
     return global_instance;
 }
+
+simplyfile::Epoll& Server::getGlobalEpoll() {
+    static simplyfile::Epoll global_epoll;
+    return global_epoll;
+}
+
 
 
 }
