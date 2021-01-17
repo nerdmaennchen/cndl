@@ -9,21 +9,14 @@
 
 namespace cndl {
 
-struct Server : simplyfile::Epoll {
-    Server(simplyfile::Host const& host, int backlog=0);
-    Server();
+struct Server {
+    Server(simplyfile::Host const& host, simplyfile::Epoll& epoll, int backlog=0);
+    Server(simplyfile::Epoll& epoll);
     ~Server();
     Server(Server&&) noexcept;
     Server& operator=(Server&&) noexcept;
 
     void listen(simplyfile::Host const& host, int backlog=0);
-
-    // calls work() in a loop until stop_looping() is called
-    void loop_forever();
-    // stops the loop (can be called from a handler of this server)
-    void stop_looping();
-    // stops the loop and wait for the loop's termination (cannot be called from a handler of this server)
-    void stop_looping_sync();
 
     Dispatcher& getDispatcher();
 
