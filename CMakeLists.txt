@@ -16,7 +16,10 @@ include_directories(${SIMPLYFILE_INCLUDE_DIRS})
 target_compile_options(cndl PRIVATE ${SIMPLYFILE_CFLAGS})
 target_link_libraries(cndl ${SIMPLYFILE_LIBRARIES})
 
-set(DEST_DIR "${CMAKE_INSTALL_PREFIX}")
+pkg_check_modules(CRYPTO REQUIRED libcrypto)
+include_directories(${CRYPTO_INCLUDE_DIRS})
+target_compile_options(cndl PRIVATE ${CRYPTO_CFLAGS})
+target_link_libraries(cndl ${CRYPTO_LIBRARIES})
 
 execute_process(
         COMMAND git describe --tags

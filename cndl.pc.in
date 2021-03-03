@@ -6,4 +6,4 @@ Description: A flask-like webserver for C++
 URL: https://github.com/nerdmaennchen/cndl
 Version: @VERSION@
 Cflags: -I${includedir}
-Libs: -L${libdir} -lcndl
+Libs: -L${libdir} -lcndl -lcrypto
