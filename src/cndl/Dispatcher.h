@@ -12,6 +12,8 @@ struct Dispatcher {
     using ErrorBodyGenerator = Response::ErrorBodyGenerator;
 
     Dispatcher(ErrorBodyGenerator generator={});
+    Dispatcher(Dispatcher&&) noexcept;
+    Dispatcher& operator=(Dispatcher&&) noexcept;
     ~Dispatcher();
 
     Response route(Request const& request) noexcept;

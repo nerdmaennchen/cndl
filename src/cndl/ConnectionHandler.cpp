@@ -32,7 +32,7 @@ struct ConnectionHandler::Pimpl {
 
     ByteBuf in_buf;
     std::vector<TransmitJob> transmit_jobs;
-    std::mutex transmit_job_mutex;
+    std::recursive_mutex transmit_job_mutex;
 
     std::unique_ptr<ProtocolHandler> protocol{};
 

@@ -30,7 +30,7 @@ Response Dispatcher::route(Request const& request) noexcept {
         }
     } catch (Error const& err) {
         return Response(err, pimpl->error_body_generator);
-    } catch (std::runtime_error const& err) {
+    } catch (std::exception const& err) {
         return Error{500, err.what()};
     } catch (...) {
         return Error{500, "uncaught error"};
@@ -80,6 +80,15 @@ Dispatcher::ErrorBodyGenerator const& Dispatcher::getErrorBodyGenerator() const 
 Dispatcher::Dispatcher(ErrorBodyGenerator generator) 
     : pimpl{std::make_unique<Pimpl>(std::move(generator))}
 {}
+
+Dispatcher::Dispatcher(Dispatcher&& other) noexcept {
+    *this = std::move(other);
+}
+
+Dispatcher& Dispatcher::operator=(Dispatcher&& other) noexcept {
+    std::swap(pimpl, other.pimpl);
+    return *this;
+}
 
 Dispatcher::~Dispatcher() {}
 

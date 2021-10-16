@@ -137,13 +137,13 @@ void Websocket::send(BinMessage message, OpCode opcode, bool fin, AfterSentCB on
     connection_handler->write(std::move(serialized), std::move(on_after_sent));
 }
 
-void Websocket::send(AnyMessage message) {
+void Websocket::send(AnyMessage message, AfterSentCB on_after_sent) {
     std::visit(detail::overloaded {
-        [this](TextMessage msg) {
-            send({reinterpret_cast<std::byte const*>(msg.data()), msg.size()}, OpCode::text, true);
+        [&, this](TextMessage msg) {
+            send({reinterpret_cast<std::byte const*>(msg.data()), msg.size()}, OpCode::text, true, std::move(on_after_sent));
         },
-        [this](BinMessage msg) {
-            send(msg, OpCode::binary, true);
+        [&, this](BinMessage msg) {
+            send(msg, OpCode::binary, true, std::move(on_after_sent));
         }
     }, message);
 }
