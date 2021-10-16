@@ -48,13 +48,6 @@ struct Server::Pimpl {
     }
 };
 
-Dispatcher& Server::getDispatcher() {
-    return pimpl->dispatcher;
-}
-
-void Server::listen(simplyfile::Host const& host, int backlog) {
-    pimpl->listen(host, backlog);
-}
 
 Server::Server(simplyfile::Epoll& epoll) : pimpl{std::make_unique<Pimpl>(epoll)} {
 }
@@ -63,8 +56,7 @@ Server::Server(simplyfile::Host const& host, simplyfile::Epoll& epoll, int backl
     pimpl->listen(host, backlog);
 }
 
-Server::~Server() {
-}
+Server::~Server() = default;
 
 Server::Server(Server&& rhs) noexcept  : pimpl{std::move(rhs.pimpl)} {}
 Server& Server::operator=(Server&& rhs) noexcept {
@@ -72,15 +64,23 @@ Server& Server::operator=(Server&& rhs) noexcept {
     return *this;
 }
 
-
-Server& Server::getGlobalServer() {
-    static Server global_instance{getGlobalEpoll()};
-    return global_instance;
+Dispatcher& Server::getDispatcher() {
+    return pimpl->dispatcher;
 }
 
-simplyfile::Epoll& Server::getGlobalEpoll() {
-    static simplyfile::Epoll global_epoll;
-    return global_epoll;
+void Server::listen(simplyfile::Host const& host, int backlog) {
+    pimpl->listen(host, backlog);
+}
+
+simplyfile::Epoll& Server::getEpoll() {
+    return pimpl->m_epoll;
+}
+
+
+Server& Server::getGlobalServer() {
+    static simplyfile::Epoll epoll;
+    static Server global_instance{epoll};
+    return global_instance;
 }
 
 
