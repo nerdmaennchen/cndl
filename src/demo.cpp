@@ -27,14 +27,23 @@ namespace
 
 void demo();
 sargp::Task demo_task{demo};
-auto optTemplPat = sargp::Parameter<sargp::Directory>("templates", "template_dir", "where to find the templates");
+auto optTemplPat = sargp::Parameter<std::string>("templates", "template_dir", "where to find the templates", []{}, sargp::completeDirectory());
+
+bool stopFlag = false;
 
 cndl::GlobalRoute globalRoute {"/global/?", [](cndl::Request const&) -> cndl::OptResponse {
     static qrqma::Template templ{qrqma::defaultLoader()("templates/global.html")};
     return templ();
 }, {.methods={"GET", "POST"}}};
 
-cndl::GlobalRoute template_route{"/(.*)?", [](cndl::Request const& request, std::string const& req_pat) -> cndl::OptResponse {
+
+cndl::GlobalRoute default_route{"/?", [](cndl::Request const&) -> cndl::OptResponse {
+    auto response = cndl::Response{308};
+    response.fields["Location"] = "/index.html";
+    return response;
+}};
+
+cndl::GlobalRoute template_route{"/(.+)?", [](cndl::Request const& request, std::string const& req_pat) -> cndl::OptResponse {
     static std::map<std::string, qrqma::Template> templates;
     static simplyfile::INotify inotify{IN_NONBLOCK};
 
@@ -42,7 +51,7 @@ cndl::GlobalRoute template_route{"/(.*)?", [](cndl::Request const& request, std:
         templates.erase(event->path);
     }
 
-    auto path = *optTemplPat / req_pat;
+    auto path = std::filesystem::path(*optTemplPat) / req_pat;
     auto nat_pat = path.native();
     auto it = templates.find(nat_pat);
     if (it == templates.end()) {
@@ -75,7 +84,7 @@ struct : cndl::WebsocketHandler {
                 ws.close();
             }
             if (txt == "term") {
-                cndl::Server::getGlobalServer().stop_looping();
+                stopFlag = true;
             }
         }
         ws.send(msg);
@@ -106,7 +115,9 @@ void demo()
     cndl::WSRoute wsroute{std::regex{R"(/test/(\d+)/)"}, echo_handler};
     server.getDispatcher().addRoute(wsroute);
 
-    server.loop_forever();
+    while (not stopFlag) {
+        server.getEpoll().work(1);
+    }
 }
 
 }

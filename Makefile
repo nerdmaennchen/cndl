@@ -47,7 +47,7 @@ CFLAGS      += -Wimplicit-function-declaration -Wmissing-prototypes -Wstrict-pro
 
 CPPFLAGS	+= $(COMMON_FLAGS)
 CPPFLAGS	+= $(W_FLAGS)
-CPPFLAGS	+= -std=c++17
+CPPFLAGS	+= -std=c++2a
 CPPFLAGS	+= -I$(INCLUDE_DIR)
 CPPFLAGS    += -gsplit-dwarf
 
