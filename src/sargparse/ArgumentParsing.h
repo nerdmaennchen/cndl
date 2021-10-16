@@ -6,8 +6,7 @@
 
 #include "Parameter.h"
 
-namespace sargp
-{
+namespace sargp {
 
 /**
  * parse the arguments and set all parameters with the parsed values

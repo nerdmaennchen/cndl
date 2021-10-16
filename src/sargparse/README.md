@@ -1,42 +1,57 @@
 # sargparse
 A very easy to use argument parser
 
-sargparse is intended to be used in very modular software where parameters can reside all over the source files
+sargparse is intended to be used in very modular software where parameters can reside all over the source files.
 
-Here is a small yet extensive example about its usage:
+## Features:
+- single value Parameters, Parameters with multiple values, Flags (Parameters with zero values)
+- Sections (parameters can be devided in sections (groups)
+- Commands and Subcommands, Parameters and Flags can be bound to certain (Sub-)commands
+- Support for values with suffix (e.g.: `k` for x1000 and `ki` for 1024, or `0.5rad` which will be converted to `0.5*PI`)
+- autocompletion for bash and zsh (includes generic completion scripts)
+- help page generation
+- man page generation
+
+
+## Example Calls
+Some example calls:
+```
+./exampleSargparse --help
+./exampleSargparse --man
+./exampleSargparse my_command
+./exampleSargparse add file1.txt file2.text
+./exampleSargparse --my_enum Bar
+./exampleSargparse --my_enum Foo
+./exampleSargparse --my_enum Bar
+./exampleSargparse --mySection.flag
+./exampleSargparse --mySection.double 3.5
+./exampleSargparse --mySection.double 0.5rad
+./exampleSargparse --mySection.flag --mySection.integer 5
+./exampleSargparse --mySection.string "hallo welt"
+./exampleSargparse --mySection.files file1.txt file2.txt
+```
+
+## Example Code
+Check [`example`](https://github.com/gottliebtfreitag/sargparse/tree/example) branch for a more detailed example.
+
+Here is a small example about its usage:
 
 File foo.cpp:
 ~~~
-#include <sargparse/Parameter.h>
+#include <sargparse/sargparse.h>
 #include <iostream>
 
 namespace {
+
 // all parameters comming from this section have "mySection." as their name prefix
 auto mySection = sargp::Section{"mySection"};
-// here are some demonstrations of how parameters can be registered
-// the arguments passed to Parameters are pretty easy: default_value, argument_name, description_for_help_text
 auto myIntParam    = mySection.Parameter<int>(123, "integer", "an integer argument");
-auto myDoubleParam = mySection.Parameter<double>(M_PI, "double", "a double argument");
-auto myStringParam = mySection.Parameter<std::string>("some string value", "string", "a string argument");
-auto myFlag        = mySection.Flag("flag", "a simple flag");
 
-void myCommandCallback();
-// if "my_command" is passed as first argument to the executable myCommandCallback will be called from sargp::callCommands()
-auto myCommand = sargp::Command{"my_command", "help text for that command", myCommandCallback};
-auto myCommandSpecificParameter = myCommand.Flag("print_hello", "print hello");
-auto myTextToPrint = myCommand.Parameter<std::vector<std::string>>({"some", "words"}, "words_to_print", "print some words");
 void myCommandCallback() {
-	std::cout << "executing \"my_command\"" << std::endl;
-	if (myCommandSpecificParameter) {
-		std::cout << "hello" << std::endl;
-	}
-	// if the compiler can infer a cast to the underlying type of the parameter it will do so
-	// also: explicit casts are possible to get the value of a parameter or simply use .get()
-	for (auto const& word : myTextToPrint.get()) {
-		std::cout << word << " ";
-	}
-	std::cout << std::endl;
+	std::cout << "executing \"my_command\"\n;
+	std::cout << "mySection.integer has value" << *myIntParam << "\n";
 }
+auto myCommand = sargp::Command{"my_command", "help text for that command", myCommandCallback};
 
 // choices (e.g., for enums) are also possible
 enum class MyEnumType {Foo, Bar};
@@ -49,7 +64,7 @@ auto myChoice = sargp::Choice<MyEnumType>{MyEnumType::Foo, "my_enum",
 file main.cpp:
 ~~~
 #include <sargparse/ArgumentParsing.h>
-#include <sargparse/Parameter.h>
+#include <sargparse/sargparse.h>
 #include <iostream>
 
 namespace {
@@ -61,7 +76,7 @@ int main(int argc, char** argv)
 	// create you own bash completion with this helper
 	if (std::string(argv[argc-1]) == "--bash_completion") {
 		auto hint = sargp::compgen(argc-2, argv+1);
-		std::cout << hint << " ";
+		std::cout << hint << "\n";
 		return 0;
 	}
 

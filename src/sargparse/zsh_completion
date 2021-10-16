@@ -1,0 +1,26 @@
+#/usr/bin/env zsh
+
+if [ ${#} != "1" ] || ! [ -f $1 ]; then
+    if ! [ -f "${1}" ]; then
+        >&2 echo "'${1}' is not a file"
+    fi
+    >&2 echo "usage:" ${1}
+    >&2 echo "    \$ source ${0} [executable]"
+else
+	sargparse_GetOpts () {
+		completions=$(${(@q)words[@]:0:$CURRENT} --bash_completion)
+		completions=(${(@f)completions})
+
+		if [ "${completions}" = " -d " ]; then
+			_files -/
+		elif [ "${completions}" = " -f " ]; then
+			_files
+		elif [[ "${completions}" =~ " -f " ]]; then
+			EXT="$(echo "${completions}" | cut -d ' ' -f 3)"
+			_files -g "*${EXT}"
+		else
+			compadd ${completions[@]}
+		fi
+	}
+	compdef sargparse_GetOpts -P $(basename $1) -N
+fi

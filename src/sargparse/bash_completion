@@ -1,30 +1,42 @@
 #/usr/bin/env bash
 
 if [ ${#} != "1" ] || ! [ -f $1 ]; then
-     >&2 echo "usage:" ${1}
-     >&2 echo "    \$ source bash_completion [executable]"
+    if ! [ -f "${1}" ]; then
+        >&2 echo "'${1}' is not a file"
+    fi
+    >&2 echo "usage:" ${1}
+    >&2 echo "    \$ source ${0} [executable]"
 else
     function sargparse_GetOpts ()
     {
-    #    local IFS=$'\n'
-        local LASTCHAR=' '
-
-        HINTS=( $($1 ${COMP_WORDS[@]:1:${COMP_CWORD}-1} --compgen) )
-        COMPREPLY=( $(eval compgen ${HINTS[@]} -- ${2}) )
-
-        if [ ${HINTS} == "-d" ] || [ ${HINTS} == "-f" ]; then
-            for ((i=0; i < ${#COMPREPLY[@]}; i++)); do
-                [ -d "${COMPREPLY[$i]}" ] && COMPREPLY[$i]=${COMPREPLY[$i]}/
-            done
-
-            if [ ${#COMPREPLY[@]} = 1 ]; then
-                [ -f "$COMPREPLY" ] && COMPREPLY=$(printf %q%s "$COMPREPLY" " ")
-            fi
-        else 
-            for ((i=0; i < ${#COMPREPLY[@]}; i++)); do
-                COMPREPLY[$i]=$(printf %q%s "${COMPREPLY[$i]}" " " )
-            done
+        WORD_TO_COMPLETE=${COMP_WORDS[COMP_CWORD]}
+        LINE="${COMP_LINE[@]:0:COMP_POINT}"
+        if [ "${COMP_LINE[@]:COMP_POINT-1:1}" = ' ' ]; then
+            LINE="${LINE} ''"
+            WORD_TO_COMPLETE=""
+        fi
+        mapfile -t HINTS <<< $(${LINE} --bash_completion)
+        if [ "${HINTS}" == " -d " ]; then
+            compopt -o filenames
+            local IFS=$'\n'
+            COMPREPLY=( $(compgen -d -- ${2}) )
+        elif [ "${HINTS}" == " -f " ]; then
+            compopt -o filenames
+            local IFS=$'\n'
+            COMPREPLY=( $(compgen -f -- ${2}) )
+        elif [[ "${HINTS}" =~ " -f " ]]; then
+            compopt -o filenames
+            EXT="$(echo "${HINTS}" | cut -d ' ' -f 3)"
+            local IFS=$'\n'
+            COMPREPLY=( $(compgen -d -- ${2}) )
+            COMPREPLY+=( $(compgen -f -X '!*'${EXT} -- ${2}) )
+        elif [ ${#HINTS} -eq 0 ]; then
+            COMPREPLY=()
+        else
+            HINTS=$(printf "%q:" "${HINTS[@]}")
+            local IFS=":"
+            mapfile -t COMPREPLY <<< $(compgen -W '${HINTS}' -- "${WORD_TO_COMPLETE}")
         fi
     }
-    complete -o nospace -F sargparse_GetOpts $1
+    complete -F sargparse_GetOpts $1
 fi
