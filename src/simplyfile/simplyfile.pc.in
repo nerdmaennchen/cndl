@@ -1,0 +1,9 @@
+libdir=@CMAKE_INSTALL_PREFIX@/lib
+includedir=@CMAKE_INSTALL_PREFIX@/include/simplyfile
+
+Name: simplyfile
+Description: C++ wrappers around linux file descriptors
+URL: https://github.com/gottliebtfreitag/simplyfile
+Version: @VERSION@
+Cflags: -I${includedir}
+Libs: -L${libdir} -lsimplyfile
