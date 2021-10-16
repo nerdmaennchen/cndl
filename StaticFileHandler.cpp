@@ -1,16 +1,13 @@
 #include "StaticFileHandler.h"
+#include "DateStrHelper.h"
 
 #include <string_view>
 
-
-#include <cstdio>
 #include <sys/stat.h>
 
 namespace cndl {
 
 namespace {
-using namespace std::string_view_literals;
-constexpr auto date_format_string = "%a, %d %b %Y %H:%M:%S %Z"sv;
 
 template<typename Func>
 struct Finally final {
@@ -22,19 +19,6 @@ private:
 
 template<typename Func>
 Finally(Func && f) -> Finally<Func>;
-
-
-std::string mkdatestr(struct tm const& tm) {
-    std::array<char, 128> date_buf;
-    strftime(date_buf.data(), date_buf.size(), date_format_string.data(), &tm);
-    return std::string(date_buf.data());
-}
-
-std::string mkdatestr(struct timespec const& ts) {
-    struct tm tm;
-    localtime_r(&ts.tv_sec, &tm);
-    return mkdatestr(tm);
-}
 
 }
 
@@ -57,14 +41,13 @@ OptResponse StaticFileHandler::operator()(Request const& request, std::string co
     clock_gettime(CLOCK_REALTIME_COARSE, &now);
     
     cndl::Response response;
-    response.fields["cache-control"] = "max-age=3600, no-cache";
-    response.fields["last-modified"] = mkdatestr(statbuf.st_mtim);
+    response.fields.emplace("cache-control", "max-age=3600, no-cache");
+    response.fields.emplace("last-modified", mkdatestr(statbuf.st_mtim));
 
     response.setContentTypeFromExtension(std::filesystem::path{ressource}.extension().native());
 
     if (auto it = request.header.fields.find("if-modified-since"); it != request.header.fields.end()) {
-        struct tm req_tm{};
-        strptime(it->second.c_str(), date_format_string.data(), &req_tm);
+        auto req_tm = parsedatestr(it->second);
         time_t req_time = mktime(&req_tm);
         if (req_time >= statbuf.st_mtim.tv_sec) {
             response.status_code = 304;
