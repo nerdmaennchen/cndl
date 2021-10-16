@@ -207,10 +207,23 @@ void action<grammar::ops::percent>::apply(ContextP &context) {
 }
 
 void action<grammar::ops::plus>::apply(ContextP &context) {
-    using Helper = InfixHelper<types::Integer, types::Float, types::Bool>;
-    detail::buildInfixOp<Helper>(context, "operator plus"sv, detail::overloaded{
-        [](auto l, auto r) { return l + r; }
-    });
+    using Helper = InfixHelper<types::Integer, types::Float, types::Bool, types::String>;
+    auto op = [](auto&& l, auto&& r) { return l + r; };
+    auto name = "operator plus"sv;
+    detail::buildInfixOp<Helper>(context, name, detail::overloaded{
+        [op](types::String const& l, types::String const& r) { return op(l, r); },
+        [op](types::Integer l, types::Integer r) { return op(l, r); },
+        [op](types::Integer l, types::Float r) { return op(l, r); },
+        [op](types::Integer l, types::Bool r) { return op(l, r); },
+        [op](types::Float l, types::Integer r) { return op(l, r); },
+        [op](types::Float l, types::Float r) { return op(l, r); },
+        [op](types::Float l, types::Bool r) { return op(l, r); },
+        [op](types::Bool l, types::Integer r) { return op(l, r); },
+        [op](types::Bool l, types::Float r) { return op(l, r); },
+        [op](types::Bool l, types::Bool r) { return op(l, r); },
+        [name](auto l, auto r) -> types::Bool {
+            throw std::runtime_error{"cannot apply binary operator \"" + std::string{name} + "\" to types: " + internal::demangle(typeid(l)) + " and " + internal::demangle(typeid(r))};
+    }});
 }
 
 void action<grammar::ops::minus>::apply(ContextP &context) {

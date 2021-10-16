@@ -21,30 +21,26 @@ void action<grammar::extends_control_statement>::apply(ContextP& context) {
         }
     }, context->popExpression());
     
-    context->addRenderToken([base_ctx = std::optional<Context>{}, name=std::move(name), ctx=context.get()]() mutable -> Context::RenderOutput {
-        if (not base_ctx) {
-            auto loader      = ctx->getTemplateLoader();
-            
-            auto loaderCtx = ctx;
-            while (loaderCtx and not loader) {
-                loader = loaderCtx->getTemplateLoader();
-                loaderCtx = loaderCtx->getParentContext();
-            }
+	
+	auto loaderCtx = context.get();
+	while (loaderCtx and not loaderCtx->getTemplateLoader()) {
+		loaderCtx = loaderCtx->getParentContext();
+	}
+	
+	auto loader = loaderCtx->getTemplateLoader();
+	if (not loader) {
+		throw std::runtime_error{"cannot extend a template without specifying a template loader!"};
+	}
 
-            if (not loader) {
-                throw std::runtime_error{"cannot extend a template without specifying a template loader!"};
-            }
-
-            base_ctx.emplace(ctx);
-            auto content = loader(name);
-            pegtl::parse<pegtl::if_must<grammar::grammar, pegtl::eof>, actions::action>(
-                pegtl::memory_input{content, ""}, 
-                *base_ctx
-            );
-            
-        }
-
-        return {(*base_ctx)().rendered, true};
+	auto content = loader(name);
+	auto base_context = std::make_unique<Context>(context.get());
+	pegtl::parse<pegtl::if_must<grammar::grammar, pegtl::eof>, actions::action>(
+		pegtl::memory_input{content, ""}, 
+		base_context
+	);
+	
+    context->addRenderToken([ctx=context.get(), base_context=std::move(base_context)]() -> Context::RenderOutput {
+        return {std::move((*base_context)().rendered), true};
     });
 }
 

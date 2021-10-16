@@ -27,10 +27,9 @@ struct prefix_unary_op : pegtl::seq<op_sep, spaces, lhs_term<precedence>> {};
 template<typename rule>
 struct try_match : pegtl::if_must<pegtl::at<rule>, rule> {};
 
-struct call_identifier : identifier {};
 struct arg_list : pegtl::opt<pegtl::list<expression, pegtl::one<','>>> {};
-struct call  : try_match<pegtl::seq<call_identifier, spaces, pegtl::one<'('>, arg_list, pegtl::one<')'> > > {};
-struct index : try_match<pegtl::seq<identifier, spaces, pegtl::one<'['>, expression, pegtl::one<']'> > > {};
+struct call  : try_match<pegtl::seq<pegtl::one<'('>, arg_list, pegtl::one<')'>, spaces > > {};
+struct index : try_match<pegtl::seq<pegtl::one<'['>, expression, pegtl::one<']'>, spaces > > {};
 
 struct unary_plus  : prefix_unary_op<pegtl::one<'+'>, 3> {};
 struct unary_minus : prefix_unary_op<pegtl::one<'-'>, 3> {};
@@ -57,10 +56,10 @@ struct op_or : infix_op<pegtl::sor<pegtl::two<124>, pegtl::keyword<'o', 'r'>>, 1
 struct braced_expression : pegtl::if_must< pegtl::one<'('>, expression, pegtl::one<')'> > {};
 
 template<> struct lhs_term< 0> : pegtl::sor<atom, braced_expression> {};
-template<> struct lhs_term< 2> : pegtl::sor<ops::call, ops::index, lhs_term<1>> {};
 template<> struct lhs_term< 3> : pegtl::sor<ops::unary_plus, ops::unary_minus, ops::unary_not, lhs_term<2>> {};
 
-template<> struct infix_term< 4> : pegtl::failure {};
+template<> struct infix_term< 3> : pegtl::failure {};
+template<> struct infix_term< 4> : pegtl::sor<infix_term<3>, ops::call, ops::index> {};
 template<> struct infix_term< 5> : pegtl::sor<infix_term<4>, ops::star, ops::fslash, ops::percent> {};
 template<> struct infix_term< 6> : pegtl::sor<infix_term<5>, ops::plus, ops::minus> {};
 template<> struct infix_term< 8> : pegtl::sor<infix_term<7>, ops::cmp_lt, ops::cmp_leq, ops::cmp_gt, ops::cmp_geq> {};

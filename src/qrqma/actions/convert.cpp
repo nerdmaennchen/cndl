@@ -5,6 +5,7 @@
 #include <numeric>
 #include <charconv>
 #include <stdexcept>
+#include <optional>
 
 namespace qrqma {
 namespace actions {
@@ -77,6 +78,8 @@ std::any convert(std::any const& in, std::type_info const& to) {
     if (typeid(types::String) == to) {
         if (typeid(void) == in.type()) {
             return std::string{};
+        } else if (typeid(char const*) == in.type()) {
+            return std::string{std::any_cast<char const*>(in)};
         } else if (typeid(types::Undefined) == in.type()) {
             return std::string{};
         } else if (typeid(symbol::List) == in.type()) {

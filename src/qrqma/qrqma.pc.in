@@ -1,0 +1,9 @@
+libdir=@CMAKE_INSTALL_PREFIX@/lib
+includedir=@CMAKE_INSTALL_PREFIX@/include/qrqma
+
+Name: qrqma
+Description: super fast jinja-like templates for c++
+URL: https://github.com/nerdmaennchen/qrqma
+Version: @VERSION@
+Cflags: -I${includedir}
+Libs: -L${libdir} -lqrqma

@@ -19,8 +19,13 @@ void action<grammar::ops::call>::success(std::string const& in, ContextP &contex
         std::all_of(begin(args_r), end(args_r), [](auto const& e) { return std::holds_alternative<CE>(e); });
 
     if (allconst) {
-        auto ftor = std::any_cast<symbol::Function>(std::get<CE>(ftor_e).eval());
-        auto const& inArgTypes = ftor.argTypes;
+		std::optional<symbol::Function> ftor;
+		try {
+			ftor.emplace(std::any_cast<symbol::Function>(std::get<CE>(ftor_e).eval()));
+		} catch (std::bad_any_cast const& e) {
+			throw std::invalid_argument("cannot perform the call: \"" + in + "\": expression is not callable");
+		}
+        auto const& inArgTypes = ftor->argTypes;
         if (args_r.size() != inArgTypes.size()) {
             throw std::invalid_argument("cannot perform the call: \"" + in + "\": invalid numer of arguments\nexpected " + std::to_string(inArgTypes.size()) + " got " + std::to_string(args_r.size()));
         }
@@ -38,15 +43,20 @@ void action<grammar::ops::call>::success(std::string const& in, ContextP &contex
             }
         }
         context->pushExpression(NCE{
-            [ftor=std::move(ftor), args=std::move(args)] {
+            [ftor=std::move(*ftor), args=std::move(args)] {
                 return ftor(args);
             }
         });
     } else {
         context->pushExpression(NCE{
             [ftor_e=std::move(ftor_e), args_r=std::move(args_r), in=std::move(in), argsC=std::move(argsC)] {
-                auto ftor = std::visit([](auto const& e) { return std::any_cast<symbol::Function>(e.eval()); }, ftor_e);
-                auto const& inArgTypes = ftor.argTypes;
+				std::optional<symbol::Function> ftor;
+				try {
+					ftor.emplace(std::visit([](auto const& e) { return std::any_cast<symbol::Function>(e.eval()); }, ftor_e));
+				} catch (std::bad_any_cast const& e) {
+					throw std::invalid_argument("cannot perform the call: \"" + in + "\": expression is not callable");
+				}
+                auto const& inArgTypes = ftor->argTypes;
                 if (args_r.size() != inArgTypes.size()) {
                     throw std::invalid_argument("cannot perform the call: \"" + in + "\": invalid numer of arguments\nexpected " + std::to_string(inArgTypes.size()) + " got " + std::to_string(args_r.size()));
                 }
@@ -65,35 +75,12 @@ void action<grammar::ops::call>::success(std::string const& in, ContextP &contex
                         ));
                     }
                 }
-                return ftor(args);
+                return (*ftor)(args);
             }
         });
     }
 }
 
-
-void action<grammar::ops::call_identifier>::apply(const std::string &in, ContextP& outer_context, ContextP&) {
-    auto symbol = (*outer_context)[in];
-    if (symbol) {
-        auto val = std::visit([](auto& e) { return e.eval(); }, *symbol);
-        if (val.type() != typeid(symbol::Function)) {
-            throw std::runtime_error("cannot invoke \"" + in + "\" of type: " + internal::demangle(val.type()));
-        }
-        outer_context->pushExpression(types::ConstantExpression{[val=std::move(val)] { return val; }});
-    } else {
-        outer_context->pushExpression(types::NonconstantExpression{[outer_context=outer_context.get(), in] {
-            auto symbol = (*outer_context)[in];
-            if (not symbol) {
-                throw std::runtime_error("cannot invoke \"" + in + "\" [unknown function]");
-            }
-            auto val = std::visit([](auto& e) { return e.eval(); }, *symbol);
-            if (val.type() != typeid(symbol::Function)) {
-                throw std::runtime_error("cannot invoke \"" + in + "\" of type: " + internal::demangle(val.type()));
-            }
-            return val;
-        }});
-    }
-}
 
 } // namespace actions
 } // namespace qrqma

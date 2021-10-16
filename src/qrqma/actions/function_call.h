@@ -38,14 +38,6 @@ template <> struct action<grammar::ops::call> : pegtl::change_states<ContextP, C
     }
 };
 
-template <> struct action<grammar::ops::call_identifier> {
-    static void apply(const std::string &in, ContextP& outer_context, ContextP& argsC);
-    template <typename Input>
-    static void apply(const Input &in, ContextP& outer_context, ContextP& argsC) {
-        apply(in.string(), outer_context, argsC);
-    }
-};
-
 template <> struct action<grammar::ops::arg_list> : pegtl::change_states<ContextP> {
     template< typename Rule, pegtl::apply_mode A, pegtl::rewind_mode M, template< typename... > class Action, template< typename... > class Control, typename Input>
     [[nodiscard]] static bool match( Input& in, ContextP& outer_context, ContextP& argsC) {
