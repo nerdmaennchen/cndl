@@ -20,11 +20,11 @@ struct Server {
 
     Dispatcher& getDispatcher();
 
+    simplyfile::Epoll& getEpoll();
+
     // returns a singleton for applications where the routing shall be done globally
     static Server& getGlobalServer();
 
-    // returns a singleton for an event loop that is used by the global server
-    static simplyfile::Epoll& getGlobalEpoll();
 private:
     struct Pimpl;
     std::unique_ptr<Pimpl> pimpl;
