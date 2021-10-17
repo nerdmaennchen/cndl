@@ -68,9 +68,9 @@ ProtocolHandler::ProtocolChange connection_upgrade(Request const& request, Conne
 
     Response response;
     response.status_code = 101;
-    response.fields["Upgrade"] = "websocket";
-    response.fields["Connection"] = "Upgrade";
-    response.fields["Sec-WebSocket-Accept"] = cndl::base64_encode({hash.data(), hash.size()});
+    response.fields.emplace("Upgrade", "websocket");
+    response.fields.emplace("Connection", "Upgrade");
+    response.fields.emplace("Sec-WebSocket-Accept", cndl::base64_encode({hash.data(), hash.size()}));
 
     auto ws = std::make_unique<Websocket>(&handler);
 

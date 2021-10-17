@@ -1,10 +1,14 @@
 #include "Response.h"
+#include "DateStrHelper.h"
 
 #include <algorithm>
 #include <map>
 #include <string_view>
 
 namespace cndl {
+
+using namespace std::string_literals;
+using namespace std::string_view_literals;
 
 namespace {
 
@@ -209,6 +213,30 @@ Response::Response(Error const& from_error, ErrorBodyGenerator pageGenerator)
     }
 }
 
+void Response::setCookie(std::string_view name, std::string_view value, CookieAttributes attributes) {
+    std::string val = std::string{name} + "=" + std::string{value};
+    if (auto expires = std::get_if<struct tm>(&attributes.lifetime); expires) {
+        val += "; Expires=" + mkdatestr(*expires);
+    }
+    if (auto max_age = std::get_if<std::chrono::seconds>(&attributes.lifetime); max_age) {
+        val += "; Max-Age=" + std::to_string(max_age->count()) + "s";
+    }
+    if (attributes.secure) {
+        val += "; Secure";
+    }
+    if (attributes.http_only) {
+        val += "; HttpOnly";
+    }
+    if (attributes.path) {
+        val += "; Path="+*attributes.path;
+    }
+    if (attributes.domain) {
+        val += "; Domain="+*attributes.domain;
+    }
+
+    fields.emplace("Set-Cookie", std::move(val));
+}
+
 std::vector<std::byte> Response::serialize() const {
     using namespace std::string_view_literals;
 
@@ -248,7 +276,8 @@ std::vector<std::byte> Response::serialize() const {
 
 
 void Response::setContentTypeFromExtension(std::string_view extension) {
-    fields["Content-Type"] = contentTypeLookup(extension);
+    fields.erase("Content-Type");
+    fields.emplace("Content-Type", contentTypeLookup(extension));
 }
 
 std::string_view Response::contentTypeLookup(std::string_view extension) {
