@@ -2,9 +2,6 @@
 
 #include "ConnectionHandler.h"
 
-#include <simplyfile/Event.h>
-
-#include <atomic>
 #include <list>
 
 namespace cndl {
