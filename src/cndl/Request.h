@@ -24,10 +24,11 @@ struct Request {
         std::string url;         // the requested URL (incl. parameters)
         std::string version;
 
+        std::map<std::string, std::string> cookies;
         FieldMap fields;
         FieldMap url_args;
 
-        BodyArgMap body_args;     // arguments that were passed via multipart/*
+        BodyArgMap body_args;    // arguments that were passed via multipart/*
 
         std::size_t content_length{0};
     };

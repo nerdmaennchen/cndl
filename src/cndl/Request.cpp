@@ -179,6 +179,17 @@ Request::Header parse_header(std::string_view request) {
         }
     }
 
+    auto cookies = header.fields.equal_range("cookie");
+    while (cookies.first != cookies.second) {
+        auto extracted = extractFieldVals(cookies.first->second);
+        for (auto const& c : extracted) {
+            if (auto kvp = std::get_if<KV_Pair>(&c); kvp) {
+                header.cookies.insert_or_assign(kvp->first, kvp->second);
+            }
+        }
+        ++cookies.first;
+    }
+
     return header;
 }
 
