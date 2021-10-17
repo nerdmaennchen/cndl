@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <algorithm>
 #include <thread>
+#include <csignal>
 
 #include "sargparse/Parameter.h"
 #include "sargparse/File.h"
@@ -39,7 +40,7 @@ cndl::GlobalRoute globalRoute {"/global/?", [](cndl::Request const&) -> cndl::Op
 
 cndl::GlobalRoute default_route{"/?", [](cndl::Request const&) -> cndl::OptResponse {
     auto response = cndl::Response{308};
-    response.fields["Location"] = "/index.html";
+    response.fields.emplace("Location", "/index.html");
     return response;
 }};
 
@@ -65,12 +66,18 @@ cndl::GlobalRoute template_route{"/(.+)?", [](cndl::Request const& request, std:
     }
     qrqma::symbol::UnorderedMultiMap url_args;
     qrqma::symbol::UnorderedMultiMap body_args;
+    qrqma::symbol::UnorderedMultiMap request_headers;
     std::for_each(begin(request.header.url_args), end(request.header.url_args), [&](auto const& p) { url_args.emplace(p.first, p.second); });
     std::for_each(begin(request.header.body_args), end(request.header.body_args), [&](auto const& p) { body_args.emplace(p.first, p.second); });
-    return (it->second)({
+    std::for_each(begin(request.header.fields), end(request.header.fields), [&](auto const& p) { request_headers.emplace(p.first, p.second); });
+
+    auto response = cndl::Response{it->second({
         {"url_args", url_args},
-        {"body_args", body_args}
-    });
+        {"body_args", body_args},
+        {"request_headers", request_headers}
+    })};
+    response.setCookie("test-cookie", "foobar");
+    return response;
 }, {.methods={"GET", "POST"}}};
 
 struct : cndl::WebsocketHandler {
@@ -107,6 +114,13 @@ struct : cndl::WebsocketHandler {
 
 void demo()
 {
+    auto termHandler = [](int) {
+        stopFlag = true;
+        cndl::Server::getGlobalServer().getEpoll().wakeup();
+    };
+    std::signal(SIGINT, termHandler);
+    std::signal(SIGQUIT, termHandler);
+
     cndl::Server& server = cndl::Server::getGlobalServer();
     for (auto host : simplyfile::getHosts("localhost", "8080")) {
         server.listen(host);
