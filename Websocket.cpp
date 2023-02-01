@@ -27,7 +27,7 @@ Websocket::ConsumeResult Websocket::onDataReceived(ByteView bv) {
         }
 
         bool fin = 0_b != (bv[0] & 0x80_b);
-        OpCode opcode = OpCode{bv[0] & 0x0f_b};
+        OpCode opcode = OpCode{std::to_integer<std::uint8_t>(bv[0] & 0x0f_b)};
         std::uint64_t payload_len = std::to_integer<int>(bv[1] & 0x7f_b);
 
         bv = bv.substr(2);
