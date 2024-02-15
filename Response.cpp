@@ -206,10 +206,12 @@ Response::Response(Error const& from_error, ErrorBodyGenerator pageGenerator)
 
     if (pageGenerator) {
         std::string body = pageGenerator(status_code, from_error.what());
-        std::transform(begin(body), end(body), std::back_inserter(message_body), [](char c) { return std::byte{static_cast<unsigned char>(c)}; });
+        message_body.emplace();
+        std::transform(begin(body), end(body), std::back_inserter(*message_body), [](char c) { return std::byte{static_cast<unsigned char>(c)}; });
     } else {
         std::string_view what{from_error.what()};
-        std::transform(begin(what), end(what), std::back_inserter(message_body), [](char c) { return std::byte{static_cast<unsigned char>(c)}; });
+        message_body.emplace();
+        std::transform(begin(what), end(what), std::back_inserter(*message_body), [](char c) { return std::byte{static_cast<unsigned char>(c)}; });
     }
 }
 
@@ -264,12 +266,15 @@ std::vector<std::byte> Response::serialize() const {
         append_str(serialized, "\r\n"sv);
     }
 
-
-    append_str(serialized, "Content-Length: "sv);
-    append_str(serialized, std::to_string(message_body.size()));
+    if (message_body) {
+        append_str(serialized, "Content-Length: "sv);
+        append_str(serialized, std::to_string(message_body->size()));
+    }
     append_str(serialized, "\r\n\r\n"sv);
 
-    serialized.insert(serialized.end(), message_body.begin(), message_body.end());
+    if (message_body) {
+        serialized.insert(serialized.end(), message_body->begin(), message_body->end());
+    }
 
     return serialized;
 }

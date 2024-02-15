@@ -1,6 +1,8 @@
 #include "StaticFileHandler.h"
 #include "DateStrHelper.h"
 
+#include <simplyfile/FileDescriptor.h>
+
 #include <string_view>
 
 #include <sys/stat.h>
@@ -28,22 +30,19 @@ StaticFileHandler::StaticFileHandler(std::filesystem::path bd)
 
 OptResponse StaticFileHandler::operator()(Request const& request, std::string const& ressource) const {
     auto pat = (base_dir / ressource).native();
-    std::FILE* f = std::fopen(pat.c_str(), "r");
+    simplyfile::FileDescriptor f{::open(pat.c_str(), O_RDONLY)};
     if (not f) {
         throw cndl::Error(404);
     }
-    auto auto_close = Finally([=]{fclose(f);});
-
     struct stat statbuf;
-    fstat(fileno(f), &statbuf);
-    
-    struct timespec now;
-    clock_gettime(CLOCK_REALTIME_COARSE, &now);
+    if (fstat(f, &statbuf) != 0) {
+        throw cndl::Error(500);
+    }
     
     cndl::Response response;
     response.fields.emplace("cache-control", "max-age=3600, no-cache");
     response.fields.emplace("last-modified", mkdatestr(statbuf.st_mtim));
-
+    response.fields.emplace("Accept-Ranges", "bytes");
     response.setContentTypeFromExtension(std::filesystem::path{ressource}.extension().native());
 
     if (auto it = request.header.fields.find("if-modified-since"); it != request.header.fields.end()) {
@@ -54,9 +53,33 @@ OptResponse StaticFileHandler::operator()(Request const& request, std::string co
             return response;
         }
     }
-    response.message_body.resize(statbuf.st_size);
-    auto bytes_read = std::fread(response.message_body.data(), 1, response.message_body.size(), f);
-    if (bytes_read != response.message_body.size()) {
+
+    response.fields.emplace("Content-Length", std::to_string(statbuf.st_size));
+    if (request.header.method == "HEAD") {
+        return response;
+    }
+
+    std::size_t start_offset = 0;
+    std::size_t end_offset   = statbuf.st_size;
+    auto [it, end] = request.header.fields.equal_range("range");
+    for (; it != end; ++it) {
+        auto const& val = it->second;
+        const std::regex reg{R"(bytes=(\d+)-(\d+))"};
+        std::smatch match;
+        if (std::regex_match(val, match, reg, std::regex_constants::format_first_only)) {
+            start_offset = std::min<std::size_t>(statbuf.st_size, std::stoi(match[1]));
+            end_offset   = std::min<std::size_t>(statbuf.st_size, std::stoi(match[2]));
+            if (start_offset > end_offset) {
+                throw cndl::Error(400);
+            }
+            break;
+        }
+    }
+
+    response.message_body.emplace();
+    response.message_body->resize(end_offset - start_offset);
+    auto bytes_read = ::pread(f, response.message_body->data(), response.message_body->size(), start_offset);
+    if (bytes_read != static_cast<std::int64_t>(response.message_body->size())) {
         throw cndl::Error(500);
     }
 

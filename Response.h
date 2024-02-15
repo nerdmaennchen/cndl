@@ -35,7 +35,7 @@ struct Response {
     std::string reason_phrase {""}; // if empty, will be auto filled
     std::multimap<std::string, std::string> fields{{"Content-Type", "text/html, charset=utf-8"}};
 
-    MessageBody message_body;
+    std::optional<MessageBody> message_body;
 
     Response() = default;
     Response(Error const& from_error, ErrorBodyGenerator pageGenerator={});
