@@ -266,11 +266,12 @@ std::vector<std::byte> Response::serialize() const {
         append_str(serialized, "\r\n"sv);
     }
 
-    if (message_body) {
+    if (message_body and fields.find("Content-Length") == fields.end()) {
         append_str(serialized, "Content-Length: "sv);
         append_str(serialized, std::to_string(message_body->size()));
+        append_str(serialized, "\r\n"sv);
     }
-    append_str(serialized, "\r\n\r\n"sv);
+    append_str(serialized, "\r\n"sv);
 
     if (message_body) {
         serialized.insert(serialized.end(), message_body->begin(), message_body->end());
