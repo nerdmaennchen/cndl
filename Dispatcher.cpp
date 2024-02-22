@@ -2,6 +2,7 @@
 
 #include <mutex>
 #include <vector>
+#include <ranges>
 
 namespace cndl {
 
@@ -21,12 +22,37 @@ struct Dispatcher::Pimpl {
 
 Response Dispatcher::route(Request const& request) noexcept {
     std::lock_guard lock{pimpl->routes_mutex};
+    struct URLMatchInfo {
+        std::cmatch match{};
+        RouteBase* route{};
+        int score{};
+    };
+    std::vector<URLMatchInfo> match_infos;
+
+    for (auto* r : pimpl->routes) {
+        auto match = r->match(request);
+        if (not match) {
+            continue;
+        }
+        int score = request.header.resource.size();
+        for (auto sub_m : *match | std::views::drop(1)) {
+            score -= sub_m.length();
+        }
+        match_infos.emplace_back(URLMatchInfo{
+            .match = *match,
+            .route = r,
+            .score = score
+        });
+    }
+
+    auto best_route = std::max_element(begin(match_infos), end(match_infos), [](auto const& l, auto const& r) { return l.score < r.score; });
+    if (best_route == match_infos.end()) {
+        return Response{404, pimpl->error_body_generator};
+    }
     try {
-        for (auto* r : pimpl->routes) {
-            auto resp = (*r)(request);
-            if (resp) {
-                return *resp;
-            }
+        auto resp = (*best_route->route)(request, best_route->match);
+        if (resp) {
+            return *resp;
         }
     } catch (Error const& err) {
         return Response(err, pimpl->error_body_generator);

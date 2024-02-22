@@ -23,20 +23,34 @@ struct RouteBase {
     struct Options {
         std::vector<std::string> methods{"GET"};
     };
-    RouteBase(Options options) noexcept : m_options{std::move(options)}
+    RouteBase(std::regex pattern, Options options) noexcept 
+    : m_pattern{std::move(pattern)}
+    , m_options{std::move(options)}
     {}
 
     RouteBase(RouteBase&&) noexcept = default;
     RouteBase& operator=(RouteBase&&) noexcept = default;
 
     virtual ~RouteBase() = default;
-    virtual OptResponse operator()(Request const& request) = 0;
+
+    std::optional<std::cmatch> match(Request const& request) const {
+        auto resource = std::string_view{request.header.resource};
+        std::cmatch res;
+        bool success = std::regex_match(begin(resource), end(resource), res, m_pattern);
+        if (success) {
+            return res;
+        }
+        return {};
+    }
+
+    virtual OptResponse operator()(Request const& request, std::cmatch const& match) = 0;
 
     Options const& getOptions() const {
         return m_options;
     }
 
 protected:
+    std::regex m_pattern;
     Options m_options;
 };
 
@@ -48,7 +62,6 @@ struct Route<OptResponse(Request const&, Args...)> : RouteBase {
 protected:
     using ParameterTuple = std::tuple<std::remove_cv_t<std::remove_reference_t<Args>>...>;
     using FuncT = unique_func<OptResponse(Request const&, Args...)>;
-    std::regex m_pattern;
     FuncT m_ftor;
 
     template<std::size_t... indexes>
@@ -72,8 +85,7 @@ public:
     using Options = typename RouteBase::Options;
 
     Route(std::regex pattern, FuncT ftor, Options options={})
-      : RouteBase{std::move(options)}
-      , m_pattern{std::move(pattern)}
+      : RouteBase{std::move(pattern), std::move(options)}
       , m_ftor{std::move(ftor)}
     {
         if (sizeof...(Args) != m_pattern.mark_count()) {
@@ -87,24 +99,20 @@ public:
 
     Route(std::string pattern, FuncT ftor, Options options={})
       : Route(std::regex{pattern}, std::move(ftor), std::move(options))
-    {}
+    {
+    }
 
     virtual ~Route() = default;
 
-    OptResponse operator()(Request const& request) override {
-        auto resource = std::string_view{request.header.resource};
-        std::match_results<decltype(std::begin(resource))> res;
-        bool success = std::regex_match(begin(resource), end(resource), res, m_pattern);
-        if (success) {
-            if (std::find(begin(m_options.methods), end(m_options.methods), request.header.method) == std::end(m_options.methods)) {
-                throw Error(405);
-            }
-            ParameterTuple args;
-            if (extract<0>(res, args)) {
-                return invoke(request, args, std::index_sequence_for<Args...>());
-            }
+    OptResponse operator()(Request const& request, std::cmatch const& match) override {
+        if (std::find(begin(m_options.methods), end(m_options.methods), request.header.method) == std::end(m_options.methods)) {
+            throw Error(405);
         }
-        return {};
+        ParameterTuple args;
+        if (extract<0>(match, args)) {
+            return invoke(request, args, std::index_sequence_for<Args...>());
+        }
+        throw Error(500);
     }
 };
 
