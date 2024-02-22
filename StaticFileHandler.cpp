@@ -7,6 +7,8 @@
 
 #include <sys/stat.h>
 
+#include <fmt/format.h>
+
 namespace cndl {
 
 namespace {
@@ -54,8 +56,8 @@ OptResponse StaticFileHandler::operator()(Request const& request, std::string co
         }
     }
 
-    response.fields.emplace("Content-Length", std::to_string(statbuf.st_size));
     if (request.header.method == "HEAD") {
+        response.fields.emplace("Content-Length", std::to_string(statbuf.st_size));
         return response;
     }
 
@@ -64,13 +66,19 @@ OptResponse StaticFileHandler::operator()(Request const& request, std::string co
     auto [it, end] = request.header.fields.equal_range("range");
     for (; it != end; ++it) {
         auto const& val = it->second;
-        const std::regex reg{R"(bytes=(\d+)-(\d+))"};
+        const std::regex reg{R"(bytes=(\d+)-(\d*))"};
         std::smatch match;
         if (std::regex_match(val, match, reg, std::regex_constants::format_first_only)) {
             start_offset = std::min<std::size_t>(statbuf.st_size, std::stoi(match[1]));
-            end_offset   = std::min<std::size_t>(statbuf.st_size, std::stoi(match[2]));
+            if (match[2].length()) {
+                end_offset   = std::min<std::size_t>(statbuf.st_size, std::stoi(match[2]));
+            }
             if (start_offset > end_offset) {
                 throw cndl::Error(400);
+            }
+            if (start_offset != 0 or end_offset != statbuf.st_size) {
+                response.status_code = 206;
+                response.fields.emplace("Content-Range", fmt::format("bytes {}-{}/{}", start_offset, end_offset - 1, statbuf.st_size));
             }
             break;
         }
@@ -82,7 +90,6 @@ OptResponse StaticFileHandler::operator()(Request const& request, std::string co
     if (bytes_read != static_cast<std::int64_t>(response.message_body->size())) {
         throw cndl::Error(500);
     }
-
     return response;
 }
 
