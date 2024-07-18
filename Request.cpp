@@ -2,6 +2,7 @@
 #include "Error.h"
 #include "overloaded.h"
 
+#include <algorithm>
 #include <charconv>
 
 namespace cndl {
