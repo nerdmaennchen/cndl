@@ -1,6 +1,6 @@
 # CNDL
 
-cndl strives to be an easy to embedd C++ webserver solution.
+cndl strives to be an easy to embed C++ webserver solution.
 One aim of this project was to have an as-close-to-flask-as-possible feel.
 Other aspects (like the handling of websockets) is roughly based on tornado's.
 
@@ -50,7 +50,7 @@ int main()
     }
 
     cndl::WSRoute wsroute{std::regex{R"(/(\d+)/)"}, echo_handler}; // route requests to /[number]/ to the echo_handler (onConnect will be called with the value of [number])
-    server.getDispatcher().addRoute(&wsroute); // hook the route to the server (you can have multiple routes fro a single endpoint) 
+    server.getDispatcher().addRoute(&wsroute); // hook the route to the server (you can have multiple routes from a single endpoint) 
     server.loop_forever(); // run the server's ioloop (epoll). call this from as many threads as you like
     return 0;
 }

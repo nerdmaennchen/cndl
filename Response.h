@@ -55,7 +55,7 @@ struct Response {
     Response(std::vector<std::byte> body) : message_body{std::move(body)} {
     }
 
-    void setCookie(std::string_view name, std::string_view value, CookieAttributes attribues={});
+    void setCookie(std::string_view name, std::string_view value, CookieAttributes attributes={});
 
     void setContentTypeFromExtension(std::string_view extension);
     
