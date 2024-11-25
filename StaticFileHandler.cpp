@@ -30,8 +30,8 @@ StaticFileHandler::StaticFileHandler(std::filesystem::path bd)
     : base_dir{std::move(bd)}
 {}
 
-OptResponse StaticFileHandler::operator()(Request const& request, std::string const& ressource) const {
-    auto pat = (base_dir / ressource).native();
+OptResponse StaticFileHandler::operator()(Request const& request, std::string const& resource) const {
+    auto pat = (base_dir / resource).native();
     simplyfile::FileDescriptor f{::open(pat.c_str(), O_RDONLY)};
     if (not f) {
         throw cndl::Error(404);
@@ -45,7 +45,7 @@ OptResponse StaticFileHandler::operator()(Request const& request, std::string co
     response.fields.emplace("cache-control", "max-age=3600, no-cache");
     response.fields.emplace("last-modified", mkdatestr(statbuf.st_mtim));
     response.fields.emplace("Accept-Ranges", "bytes");
-    response.setContentTypeFromExtension(std::filesystem::path{ressource}.extension().native());
+    response.setContentTypeFromExtension(std::filesystem::path{resource}.extension().native());
 
     if (auto it = request.header.fields.find("if-modified-since"); it != request.header.fields.end()) {
         auto req_tm = parsedatestr(it->second);
@@ -93,8 +93,8 @@ OptResponse StaticFileHandler::operator()(Request const& request, std::string co
     return response;
 }
 
-bool StaticFileHandler::can_serve_ressource(std::string const& ressource) const {
-    auto pat = (base_dir / ressource).native();
+bool StaticFileHandler::can_serve_resource(std::string const& resource) const {
+    auto pat = (base_dir / resource).native();
     std::FILE* f = std::fopen(pat.c_str(), "r");
     if (not f) {
         return false;

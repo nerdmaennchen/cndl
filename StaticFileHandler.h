@@ -9,8 +9,8 @@ namespace cndl {
 struct StaticFileHandler {
     StaticFileHandler(std::filesystem::path base_dir);
 
-    OptResponse operator()(Request const& request, std::string const& ressource) const;
-    bool can_serve_ressource(std::string const& ressource) const;
+    OptResponse operator()(Request const& request, std::string const& resource) const;
+    bool can_serve_resource(std::string const& resource) const;
 private:
     std::filesystem::path base_dir;
 };
