@@ -33,7 +33,7 @@ StaticFileHandler::StaticFileHandler(std::filesystem::path bd)
 OptResponse StaticFileHandler::operator()(Request const& request, std::string const& resource) const {
     auto pat = (base_dir / resource).native();
     simplyfile::FileDescriptor f{::open(pat.c_str(), O_RDONLY)};
-    if (not f) {
+    if (not f.valid()) {
         throw cndl::Error(404);
     }
     struct stat statbuf;
