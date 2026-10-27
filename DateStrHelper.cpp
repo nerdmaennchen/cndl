@@ -10,7 +10,8 @@ using namespace std::string_view_literals;
 namespace cndl {
 
 namespace {
-constexpr auto date_format_string = "%a, %d %b %Y %H:%M:%S %Z"sv;
+// HTTP dates are always given in GMT (RFC 9110, section 5.6.7)
+constexpr auto date_format_string = "%a, %d %b %Y %H:%M:%S GMT"sv;
 }
 
 std::string mkdatestr(struct tm const& tm) {
@@ -21,7 +22,7 @@ std::string mkdatestr(struct tm const& tm) {
 
 std::string mkdatestr(struct timespec const& ts) {
     struct tm tm;
-    localtime_r(&ts.tv_sec, &tm);
+    gmtime_r(&ts.tv_sec, &tm);
     return mkdatestr(tm);
 }
 

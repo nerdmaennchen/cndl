@@ -49,7 +49,7 @@ OptResponse StaticFileHandler::operator()(Request const& request, std::string co
 
     if (auto it = request.header.fields.find("if-modified-since"); it != request.header.fields.end()) {
         auto req_tm = parsedatestr(it->second);
-        time_t req_time = mktime(&req_tm);
+        time_t req_time = timegm(&req_tm);
         if (req_time >= statbuf.st_mtim.tv_sec) {
             response.status_code = 304;
             return response;
