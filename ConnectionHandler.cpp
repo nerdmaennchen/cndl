@@ -13,7 +13,8 @@ bool flush_job(ConnectionHandler::TransmitJob &job, ConnectionHandler::ClientSoc
     auto& [out_buf, bytes_sent, cb] = job;
     while (bytes_sent < out_buf.size()) {
         int w = ::send(con, out_buf.data()+bytes_sent, out_buf.size()-bytes_sent, MSG_NOSIGNAL);
-        if (w <= 0 and (errno == EWOULDBLOCK || errno == EAGAIN)) {
+        if (w <= 0) {
+            // either the socket is full or the connection is broken (which will be reported via EPOLLERR/EPOLLHUP)
             return false;
         }
         bytes_sent += w;
@@ -34,6 +35,10 @@ struct ConnectionHandler::Pimpl {
     std::vector<TransmitJob> transmit_jobs;
     std::recursive_mutex transmit_job_mutex;
 
+    // the epoll handle is rearmed by write() (from any thread) while a callback might still be running;
+    // this serializes the handling of IO events of this connection
+    std::mutex io_mutex;
+
     std::unique_ptr<ProtocolHandler> protocol{};
 
     std::atomic<size_t> outBufferSize{0};
@@ -48,6 +53,9 @@ struct ConnectionHandler::Pimpl {
     void write(ByteBuf out_buf, AfterSentCB on_after_sent) {
         auto job = TransmitJob(std::move(out_buf), 0U, std::move(on_after_sent));
         std::lock_guard lock{transmit_job_mutex};
+        if (not con.valid()) {
+            return; // the connection has been closed already
+        }
         if (not transmit_jobs.empty() || not flush_job(job, con)) {
             // update buffer size
             auto const& [out_buf, bytes_sent, cb] = job;
@@ -61,6 +69,10 @@ struct ConnectionHandler::Pimpl {
     }
 
     void operator()(int flags) {
+        std::lock_guard io_lock{io_mutex};
+        if (not con.valid()) {
+            return; // closed while this event was waiting for io_mutex
+        }
         if (flags & (EPOLLERR|EPOLLHUP|EPOLLRDHUP)) {
             if (protocol) {
                 protocol->onPeerClose();
@@ -76,7 +88,8 @@ struct ConnectionHandler::Pimpl {
                 auto head = in_buf.size();
                 in_buf.resize(head+read_size);
                 int r = ::recv(con, in_buf.data()+head, read_size, 0);
-                if (r < 0 && (errno == EWOULDBLOCK || errno == EAGAIN)) {
+                if (r < 0) {
+                    // nothing to read (anymore) or an error (which will be reported via EPOLLERR/EPOLLHUP)
                     in_buf.resize(head);
                     break;
                 }
@@ -120,13 +133,12 @@ struct ConnectionHandler::Pimpl {
             }
         }
 
-        {
-            std::lock_guard lock{transmit_job_mutex};
-            if (not transmit_jobs.empty()) {
-                mod_flags |= EPOLLOUT;
-            }
+        // rearm under the same lock as write() does; otherwise a concurrent write could request EPOLLOUT
+        // right before this overwrites it with the stale state (and the queued data would never be sent)
+        std::lock_guard lock{transmit_job_mutex};
+        if (not transmit_jobs.empty()) {
+            mod_flags |= EPOLLOUT;
         }
-
         if (con.valid()) {
             // up to here con might have been closed (and thus deregistered from epoll)
             // we only need to rearm the epoll handle if the connection is still open
@@ -135,6 +147,11 @@ struct ConnectionHandler::Pimpl {
     }
 
     void close(bool blocking) {
+        // write() must not rearm a connection that is being closed
+        std::lock_guard lock{transmit_job_mutex};
+        if (not con.valid()) {
+            return;
+        }
         epoll.rmFD(con, blocking);
         con.close();
     }

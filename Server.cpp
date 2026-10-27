@@ -24,6 +24,9 @@ struct Server::Pimpl {
     void listen(simplyfile::Host const& host, int backlog) {
         auto& ss = server_sockets.emplace_back(host);
         ss.setFlags(O_NONBLOCK);
+        // listen before adding the socket to the epoll: a socket that is not listening yet reports EPOLLHUP
+        // which (when dispatched by another thread right away) would remove the socket from the epoll for good
+        ss.listen(backlog);
         m_epoll.addFD(ss, [this, &ss](int flags) {
             if (flags != EPOLLIN) {
                 m_epoll.rmFD(ss, false);
@@ -41,7 +44,6 @@ struct Server::Pimpl {
             }
             m_epoll.modFD(ss, EPOLLIN|EPOLLONESHOT);
         }, EPOLLIN|EPOLLONESHOT, "cndl::accept");
-        ss.listen(backlog);
     }
 };
 
