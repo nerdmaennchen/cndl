@@ -7,7 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 find_package(PkgConfig)
 
-file(GLOB_RECURSE CPP_SRCS ./*.cpp)
+# not recursive: a build directory inside the source tree contains .cpp files, too (e.g., CMakeCXXCompilerId.cpp)
+file(GLOB CPP_SRCS CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 
 add_library(cndl SHARED ${CPP_SRCS})
 
